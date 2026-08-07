@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
@@ -94,6 +95,24 @@ def test_hash_all_clamped_empty(colorado: Hasher):
 def test_hash_all_clamped_length_mismatch(colorado: Hasher, start_datetime: datetime):
     with pytest.raises(ValueError):
         colorado.hash_all_clamped([start_datetime, start_datetime], [-105.0], [40.0])
+
+
+def test_clamping_warns_through_python_logging(
+    colorado: Hasher, start_datetime: datetime, caplog: pytest.LogCaptureFixture
+):
+    with caplog.at_level(logging.WARNING, logger="stac_hash"):
+        colorado.hash_clamped(start_datetime, -120.0, 40.0)
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert warnings
+    assert all(r.name == "stac_hash" for r in warnings)
+
+
+def test_in_extent_hash_does_not_warn(
+    colorado: Hasher, start_datetime: datetime, caplog: pytest.LogCaptureFixture
+):
+    with caplog.at_level(logging.WARNING, logger="stac_hash"):
+        colorado.hash_clamped(start_datetime, -105.0, 40.0)
+    assert not caplog.records
 
 
 def test_bbox_changes_the_hash(

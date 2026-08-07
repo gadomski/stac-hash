@@ -135,6 +135,7 @@ fn to_py_err(error: Error) -> PyErr {
 
 #[pymodule]
 fn stac_hash(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    pyo3_log::init();
     m.add_class::<Hasher>()?;
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     Ok(())
