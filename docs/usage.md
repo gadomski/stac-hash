@@ -48,6 +48,20 @@ Pass `bbox=(min_lon, min_lat, max_lon, max_lat)` to hash against a smaller exten
 
 To clamp instead of erroring, use `hash_clamped` and `hash_all_clamped`. They mirror the Rust `Hasher::hash_clamped` method: anything outside the extent is pinned to the nearest boundary, in time as well as space, so they never raise for out-of-range input.
 
+Each clamped value is logged as a warning through the standard library's `logging`, on a logger named `stac_hash`. Nothing is printed unless you configure logging:
+
+```python
+import logging
+
+logging.basicConfig(level=logging.WARNING)
+```
+
+```text
+WARNING:stac_hash:longitude outside of the hasher's spatial extent: -120
+```
+
+Silence them with `logging.getLogger("stac_hash").setLevel(logging.ERROR)`.
+
 ## How it works
 
 Each of datetime, latitude, and longitude is normalized to `0..1` within the hasher's extent, then quantized to a 21-bit integer. Those three values are bit-interleaved into a single `u64`, using 63 of its 64 bits. The datetime bit occupies the most significant slot of each interleaved triple, so sorting by hash orders coarsely by time first, then latitude, then longitude.

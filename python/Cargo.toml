@@ -20,4 +20,5 @@ pyo3 = { version = "0.29", features = [
     "chrono",
     "extension-module",
 ] }
+pyo3-log = "0.13.4"
 stac-hash = { path = ".." }
