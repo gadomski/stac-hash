@@ -1,5 +1,7 @@
 # stac-hash
 
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/gadomski/stac-hash/pr.yml?branch=main&style=for-the-badge)](https://github.com/gadomski/stac-hash/actions/workflows/pr.yml)
+
 Sortable spatio-temporal hashes for [STAC](https://stacspec.org/)
 [items](https://github.com/radiantearth/stac-spec/blob/master/item-spec/item-spec.md).
 
