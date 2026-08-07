@@ -58,3 +58,17 @@ class Hasher:
         any item falls outside the hasher's extent. Pass `skip_invalid=True`
         to get `None` for out-of-extent items instead of raising.
         """
+
+    def hash_all(
+        self,
+        datetimes: Sequence[datetime],
+        longitudes: Sequence[float],
+        latitudes: Sequence[float],
+        skip_invalid: bool = False,
+    ) -> list[int] | list[int | None]:
+        """Hashes parallel sequences of datetimes, longitudes, and latitudes.
+
+        Raises a `ValueError` if the sequences are not the same length, or if
+        any item falls outside the hasher's extent. Pass `skip_invalid=True`
+        to get `None` for out-of-extent items instead of raising.
+        """

@@ -1,5 +1,6 @@
 /target
 /dist
+/site
 .venv
 __pycache__
 *.so

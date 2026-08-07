@@ -1,0 +1,74 @@
+site_name: stac-hash
+site_description: Configurable, sortable spatio-temporal hashes, good for STAC items
+site_url: https://gadomski.github.io/stac-hash
+repo_url: https://github.com/gadomski/stac-hash
+repo_name: gadomski/stac-hash
+strict: true
+
+exclude_docs: |
+  superpowers/
+
+nav:
+  - README: index.md
+  - usage.md
+  - api.md
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - content.code.copy
+    - search.suggest
+    - toc.integrate
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      primary: default
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: default
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+extra:
+  version:
+    provider: mike
+
+plugins:
+  - search
+  - mike
+  - mkdocstrings:
+      enable_inventory: true
+      handlers:
+        python:
+          options:
+            allow_inspection: false
+            docstring_section_style: list
+            docstring_style: google
+            line_length: 80
+            merge_init_into_class: true
+            separate_signature: true
+            show_root_heading: true
+            show_signature_annotations: true
+            show_source: false
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: true
