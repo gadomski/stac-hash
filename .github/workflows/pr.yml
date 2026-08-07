@@ -1,0 +1,72 @@
+name: PR
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTDOCFLAGS: -Dwarnings
+
+jobs:
+  python-test:
+    name: Test Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v9
+        with:
+          python-version: "3.13"
+      - name: Sync
+        run: uv sync
+      - name: Test
+        run: uv run pytest
+      - name: Lint
+        run: |
+          uv run ruff check
+          uv run ruff format --check
+      - name: Type check
+        run: uv run basedpyright
+
+  python-docs:
+    name: Build Python docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v9
+        with:
+          python-version: "3.13"
+      - name: Sync
+        run: uv sync
+      - name: Build
+        run: uv run mkdocs build --strict
+
+  rust-test:
+    name: Test Rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
+      - name: Test
+        run: cargo test
+      - name: Clippy
+        run: cargo clippy --all-targets -- -Dwarnings
+      - name: Clippy bindings
+        run: cargo clippy -p stac-hash-python --all-targets -- -Dwarnings
+      - name: Format
+        run: cargo fmt --check --all
+
+  rust-docs:
+    name: Build Rust docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo doc --no-deps
