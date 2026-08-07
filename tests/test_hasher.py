@@ -100,8 +100,10 @@ def test_hash_all_accepts_tuples(hasher: Hasher, start_datetime: datetime):
 
 def test_hash_all_rejects_generators(hasher: Hasher, start_datetime: datetime):
     with pytest.raises(TypeError):
-        hasher.hash_all(  # type: ignore[call-overload]
-            iter([start_datetime]), iter([-105.0]), iter([40.0])
+        hasher.hash_all(
+            iter([start_datetime]),  # pyright: ignore[reportArgumentType]
+            iter([-105.0]),  # pyright: ignore[reportArgumentType]
+            iter([40.0]),  # pyright: ignore[reportArgumentType]
         )
 
 

@@ -39,13 +39,15 @@ strip = true
 testpaths = ["tests"]
 filterwarnings = ["error"]
 
-[tool.mypy]
-files = "tests/**/*.py"
+[tool.basedpyright]
+include = ["tests", "stac_hash.pyi"]
+reportUnusedCallResult = false
+reportUnnecessaryTypeIgnoreComment = true
 
 [dependency-groups]
 dev = [
+    "basedpyright>=1.31",
     "maturin>=1.14",
-    "mypy>=1.11",
     "pytest>=8.3",
     "ruff>=0.6",
 ]
