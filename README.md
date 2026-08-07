@@ -13,6 +13,8 @@ hash. The hash is a [Morton code](https://en.wikipedia.org/wiki/Z-order_curve)
 in space and time, which makes the hash useful as a sort key or an index prefix
 for range scans.
 
+We have [Python](https://pypi.org/project/stac-hash/) and [Rust](https://crates.io/crates/stac-hash) packages.
+
 ## License
 
 Licensed under either of
