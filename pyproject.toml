@@ -1,0 +1,51 @@
+[project]
+name = "stac-hash"
+description = "Configurable, sortable spatio-temporal hashes, good for STAC items"
+readme = "README.md"
+authors = [{ name = "Pete Gadomski", email = "pete.gadomski@gmail.com" }]
+requires-python = ">=3.11"
+license = "MIT OR Apache-2.0"
+license-files = ["LICENSE-APACHE", "LICENSE-MIT"]
+keywords = ["stac", "geospatial"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Rust",
+    "Typing :: Typed",
+]
+dynamic = ["version"]
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/gadomski/stac-hash"
+Issues = "https://github.com/gadomski/stac-hash/issues"
+
+[build-system]
+requires = ["maturin>=1.14,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+manifest-path = "python/Cargo.toml"
+module-name = "stac_hash"
+strip = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error"]
+
+[tool.mypy]
+files = "tests/**/*.py"
+
+[dependency-groups]
+dev = [
+    "maturin>=1.14",
+    "mypy>=1.11",
+    "pytest>=8.3",
+    "ruff>=0.6",
+]

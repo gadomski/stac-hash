@@ -1,6 +1,6 @@
 [package]
 name = "stac-hash"
-version = "0.0.1"
+version.workspace = true
 edition = "2024"
 rust-version = "1.85"
 authors = ["Pete Gadomski <pete.gadomski@gmail.com>"]
@@ -18,3 +18,10 @@ thiserror = "2.0.19"
 
 [dev-dependencies]
 rstest = "0.26.1"
+
+[workspace]
+members = ["python"]
+default-members = ["."]
+
+[workspace.package]
+version = "0.0.1"

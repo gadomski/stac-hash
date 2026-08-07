@@ -1,4 +1,18 @@
-//! Configurable, sortable spatio-temporal hashes, good for [STAC](https://stacspec.org/) [items](https://github.com/radiantearth/stac-spec/blob/master/item-spec/item-spec.md).
+//! Configurable, sortable spatio-temporal hashes, good for
+//! [STAC](https://stacspec.org/)
+//! [items](https://github.com/radiantearth/stac-spec/blob/master/item-spec/item-spec.md).
+//!
+//! # Examples
+//!
+//! ```
+//! use stac_hash::Hasher;
+//! use chrono::Utc;
+//!
+//! let start_datetime = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
+//! let end_datetime = Utc.with_ymd_and_hms(2027, 1, 1, 0, 0, 0).unwrap();
+//! let hasher = Hasher::global(start_datetime, end_datetime);
+//! let hash = hasher.hash(Utc::now(), Point { longitude: , latitude:  });
+//! ```
 
 use chrono::{DateTime, Utc};
 use thiserror::Error;
@@ -13,6 +27,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// TODO Configurable datetime precision
 /// TODO Configurable output type (currently hardcoded to u64)
 /// TODO Configurable primary sort order (currently hardcoded to datetime)
+/// TODO Configurable clamping (instead of erroring)
 #[derive(Debug)]
 pub struct Hasher {
     start_datetime: DateTime<Utc>,

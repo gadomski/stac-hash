@@ -6,6 +6,8 @@ A `Hasher` is built from a datetime range and a bounding box, and turns a (datet
 
 ## Usage
 
+### Rust
+
 ```sh
 cargo add stac-hash
 ```
@@ -28,6 +30,26 @@ assert_eq!(hash, 3024785829217804842);
 Use `Hasher::new` instead of `Hasher::global` to hash against a smaller bounding box, which spends the available bits on a smaller area and so gives you finer spatial resolution.
 
 Datetimes and points outside of the hasher's extent are an error, not a clamp.
+
+### Python
+
+```sh
+pip install stac-hash
+```
+
+```python
+from datetime import datetime, timezone
+
+from stac_hash import Hasher
+
+hasher = Hasher(
+    datetime(2026, 1, 1, tzinfo=timezone.utc),
+    datetime(2027, 1, 1, tzinfo=timezone.utc),
+)
+assert hasher.hash(datetime(2026, 6, 14, 12, tzinfo=timezone.utc), -105.0, 40.0) == 3024785829217804842
+```
+
+Pass `bbox=(min_lon, min_lat, max_lon, max_lat)` to hash against a smaller extent, and use `hash_all(datetimes, longitudes, latitudes)` to hash a batch in one call. Datetimes must be timezone-aware, and the sequences must be the same length. Out-of-extent input raises `ValueError`; pass `skip_invalid=True` to `hash_all` to get `None` for those items instead of raising.
 
 ## How it works
 

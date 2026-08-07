@@ -1,0 +1,23 @@
+[package]
+name = "stac-hash-python"
+version.workspace = true
+edition = "2024"
+rust-version = "1.85"
+authors = ["Pete Gadomski <pete.gadomski@gmail.com>"]
+description = "pyo3 bindings for stac-hash"
+repository = "https://github.com/gadomski/stac-hash"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+name = "stac_hash"
+crate-type = ["cdylib"]
+
+[dependencies]
+chrono = "0.4.45"
+pyo3 = { version = "0.29", features = [
+    "abi3-py311",
+    "chrono",
+    "extension-module",
+] }
+stac-hash = { path = ".." }
