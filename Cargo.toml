@@ -1,7 +1,16 @@
 [package]
 name = "stac-hash"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
+rust-version = "1.85"
+authors = ["Pete Gadomski <pete.gadomski@gmail.com>"]
+description = "Configurable, sortable spatio-temporal hashes, good for STAC items"
+documentation = "https://docs.rs/stac-hash"
+repository = "https://github.com/gadomski/stac-hash"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["stac", "geospatial", "spatiotemporal", "hash", "morton"]
+categories = ["science::geo", "algorithms", "data-structures"]
 
 [dependencies]
 chrono = "0.4.45"

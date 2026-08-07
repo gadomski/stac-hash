@@ -1,6 +1,7 @@
 //! Configurable, sortable spatio-temporal hashes, good for [STAC](https://stacspec.org/) [items](https://github.com/radiantearth/stac-spec/blob/master/item-spec/item-spec.md).
 
 use chrono::{DateTime, Utc};
+use thiserror::Error;
 
 const BITS_PER_DIMENSION: u8 = 21; // 63 / 3
 const MAX_VALUE: f64 = ((1u64 << BITS_PER_DIMENSION) - 1) as f64;
@@ -11,6 +12,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 ///
 /// TODO Configurable datetime precision
 /// TODO Configurable output type (currently hardcoded to u64)
+/// TODO Configurable primary sort order (currently hardcoded to datetime)
 #[derive(Debug)]
 pub struct Hasher {
     start_datetime: DateTime<Utc>,
@@ -25,16 +27,25 @@ pub struct Hasher {
 }
 
 /// A simple WGS84 point structure.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Point {
     pub longitude: f64,
     pub latitude: f64,
 }
 
-#[derive(Debug)]
+/// Errors returned when a value falls outside of a [Hasher]'s extent.
+#[derive(Debug, Error)]
 pub enum Error {
+    /// The datetime is outside of the hasher's temporal extent.
+    #[error("datetime outside of the hasher's temporal extent: {0}")]
     InvalidDatetime(DateTime<Utc>),
+
+    /// The latitude is outside of the hasher's spatial extent.
+    #[error("latitude outside of the hasher's spatial extent: {0}")]
     InvalidLatitude(f64),
+
+    /// The longitude is outside of the hasher's spatial extent.
+    #[error("longitude outside of the hasher's spatial extent: {0}")]
     InvalidLongitude(f64),
 }
 
@@ -118,6 +129,8 @@ impl From<(f64, f64)> for Point {
 
 #[cfg(test)]
 mod tests {
+    use crate::Point;
+
     use super::Hasher;
     use chrono::{DateTime, TimeZone, Utc};
     use rstest::{fixture, rstest};
@@ -133,16 +146,24 @@ mod tests {
     }
 
     #[fixture]
+    fn longmont() -> Point {
+        Point {
+            longitude: -105.,
+            latitude: 40.,
+        }
+    }
+
+    #[fixture]
     fn hasher(start_datetime: DateTime<Utc>, end_datetime: DateTime<Utc>) -> Hasher {
         Hasher::global(start_datetime, end_datetime).unwrap()
     }
 
     #[rstest]
-    fn one_year_global(hasher: Hasher) {
+    fn one_year_global(hasher: Hasher, longmont: Point) {
         let hash = hasher
             .hash(
                 Utc.with_ymd_and_hms(2026, 6, 14, 12, 0, 0).unwrap(),
-                (-105., 40.),
+                longmont,
             )
             .unwrap();
         assert_eq!(hash, 3024785829217804842);
@@ -154,5 +175,44 @@ mod tests {
         let hash_near = hasher.hash(start_datetime, (-105.1, 40.1)).unwrap();
         let hash_far = hasher.hash(start_datetime, (-106., 41.)).unwrap();
         assert!(hash.abs_diff(hash_near) < hash.abs_diff(hash_far));
+    }
+
+    #[rstest]
+    fn sort_datetime(hasher: Hasher, start_datetime: DateTime<Utc>, longmont: Point) {
+        let hash_a = hasher.hash(start_datetime, longmont).unwrap();
+        let hash_b = hasher
+            .hash(start_datetime + chrono::Duration::days(1), longmont)
+            .unwrap();
+        assert!(hash_a < hash_b);
+    }
+
+    #[rstest]
+    fn sort_latitude(hasher: Hasher, start_datetime: DateTime<Utc>, longmont: Point) {
+        let hash_a = hasher.hash(start_datetime, longmont).unwrap();
+        let hash_b = hasher
+            .hash(
+                start_datetime,
+                Point {
+                    latitude: 41.,
+                    longitude: -105.,
+                },
+            )
+            .unwrap();
+        assert!(hash_a < hash_b);
+    }
+
+    #[rstest]
+    fn sort_longitude(hasher: Hasher, start_datetime: DateTime<Utc>, longmont: Point) {
+        let hash_a = hasher.hash(start_datetime, longmont).unwrap();
+        let hash_b = hasher
+            .hash(
+                start_datetime,
+                Point {
+                    latitude: 40.,
+                    longitude: -104.,
+                },
+            )
+            .unwrap();
+        assert!(hash_a < hash_b);
     }
 }
