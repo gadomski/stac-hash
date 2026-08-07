@@ -433,7 +433,7 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
 name = "stac-hash"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "chrono",
  "log",
@@ -443,7 +443,7 @@ dependencies = [
 
 [[package]]
 name = "stac-hash-python"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "chrono",
  "pyo3",
