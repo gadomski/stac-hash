@@ -436,6 +436,7 @@ name = "stac-hash"
 version = "0.0.1"
 dependencies = [
  "chrono",
+ "log",
  "rstest",
  "thiserror",
 ]

@@ -20,9 +20,80 @@ def hasher(start_datetime: datetime, end_datetime: datetime) -> Hasher:
     return Hasher(start_datetime, end_datetime)
 
 
+@pytest.fixture
+def colorado(start_datetime: datetime, end_datetime: datetime) -> Hasher:
+    return Hasher(start_datetime, end_datetime, bbox=(-109.0, 37.0, -102.0, 41.0))
+
+
 def test_matches_rust(hasher: Hasher):
     hash = hasher.hash(datetime(2026, 6, 14, 12, tzinfo=UTC), -105.0, 40.0)
     assert hash == 3024785829217804842
+
+
+def test_hash_clamped_matches_hash_inside_the_extent(
+    colorado: Hasher, start_datetime: datetime
+):
+    assert colorado.hash_clamped(start_datetime, -105.0, 40.0) == colorado.hash(
+        start_datetime, -105.0, 40.0
+    )
+
+
+def test_hash_clamped_clamps_longitude(colorado: Hasher, start_datetime: datetime):
+    assert colorado.hash_clamped(start_datetime, -120.0, 40.0) == colorado.hash(
+        start_datetime, -109.0, 40.0
+    )
+
+
+def test_hash_clamped_clamps_latitude(colorado: Hasher, start_datetime: datetime):
+    assert colorado.hash_clamped(start_datetime, -105.0, 90.0) == colorado.hash(
+        start_datetime, -105.0, 41.0
+    )
+
+
+def test_hash_clamped_clamps_datetime(
+    colorado: Hasher, end_datetime: datetime, start_datetime: datetime
+):
+    beyond = end_datetime + timedelta(days=365)
+    assert colorado.hash_clamped(beyond, -105.0, 40.0) == colorado.hash(
+        end_datetime, -105.0, 40.0
+    )
+    assert colorado.hash_clamped(beyond, -105.0, 40.0) != colorado.hash(
+        start_datetime, -105.0, 40.0
+    )
+
+
+def test_hash_clamped_requires_aware_datetime(colorado: Hasher):
+    with pytest.raises(TypeError):
+        colorado.hash_clamped(datetime(2026, 6, 14, 12), -105.0, 40.0)  # noqa: DTZ001
+
+
+def test_hash_all_clamped_matches_hash_clamped(
+    colorado: Hasher, start_datetime: datetime
+):
+    datetimes = [start_datetime] * 3
+    longitudes = [-105.0, -120.0, -100.0]
+    latitudes = [40.0, 90.0, 38.0]
+    assert colorado.hash_all_clamped(datetimes, longitudes, latitudes) == [
+        colorado.hash_clamped(dt, lon, lat)
+        for dt, lon, lat in zip(datetimes, longitudes, latitudes)
+    ]
+
+
+def test_hash_all_clamped_never_raises_on_extent(
+    colorado: Hasher, start_datetime: datetime
+):
+    hashes = colorado.hash_all_clamped([start_datetime], [181.0], [91.0])
+    assert len(hashes) == 1
+    assert hashes[0] is not None
+
+
+def test_hash_all_clamped_empty(colorado: Hasher):
+    assert colorado.hash_all_clamped([], [], []) == []
+
+
+def test_hash_all_clamped_length_mismatch(colorado: Hasher, start_datetime: datetime):
+    with pytest.raises(ValueError):
+        colorado.hash_all_clamped([start_datetime, start_datetime], [-105.0], [40.0])
 
 
 def test_bbox_changes_the_hash(

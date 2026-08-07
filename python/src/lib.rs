@@ -47,6 +47,17 @@ impl Hasher {
             .map_err(to_py_err)
     }
 
+    /// Hashes a datetime and a point into an `int`, clamping anything outside
+    /// of this hasher's extent onto its boundary.
+    ///
+    /// Unlike `hash`, this never raises for out-of-extent input. A datetime
+    /// before the hasher's start hashes as that start, a longitude west of the
+    /// minimum hashes as that minimum, and so on.
+    fn hash_clamped(&self, datetime: DateTime<FixedOffset>, longitude: f64, latitude: f64) -> u64 {
+        self.0
+            .hash_clamped(datetime.with_timezone(&Utc), (longitude, latitude))
+    }
+
     /// Hashes parallel sequences of datetimes, longitudes, and latitudes.
     ///
     /// Raises a `ValueError` if the sequences are not the same length, or if
@@ -85,6 +96,36 @@ impl Hasher {
             }
         }
         Ok(hashes)
+    }
+
+    /// Hashes parallel sequences, clamping anything outside of this hasher's
+    /// extent onto its boundary.
+    ///
+    /// Raises a `ValueError` only if the sequences are not the same length.
+    /// No item can fall outside the extent, so there is no `skip_invalid`.
+    fn hash_all_clamped(
+        &self,
+        datetimes: Vec<DateTime<FixedOffset>>,
+        longitudes: Vec<f64>,
+        latitudes: Vec<f64>,
+    ) -> PyResult<Vec<u64>> {
+        if datetimes.len() != longitudes.len() || datetimes.len() != latitudes.len() {
+            return Err(PyValueError::new_err(format!(
+                "sequences must be the same length: {} datetimes, {} longitudes, {} latitudes",
+                datetimes.len(),
+                longitudes.len(),
+                latitudes.len()
+            )));
+        }
+        Ok(datetimes
+            .into_iter()
+            .zip(longitudes)
+            .zip(latitudes)
+            .map(|((datetime, longitude), latitude)| {
+                self.0
+                    .hash_clamped(datetime.with_timezone(&Utc), (longitude, latitude))
+            })
+            .collect())
     }
 }
 

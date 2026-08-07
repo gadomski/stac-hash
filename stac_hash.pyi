@@ -20,6 +20,16 @@ class Hasher:
     def hash(self, datetime: datetime, longitude: float, latitude: float) -> int:
         """Hashes a datetime and a point into an `int`."""
 
+    def hash_clamped(
+        self, datetime: datetime, longitude: float, latitude: float
+    ) -> int:
+        """Hashes a datetime and a point, clamping onto the hasher's boundary.
+
+        Unlike `hash`, this never raises for out-of-extent input. A datetime
+        before the hasher's start hashes as that start, a longitude west of
+        the minimum hashes as that minimum, and so on.
+        """
+
     @overload
     def hash_all(
         self,
@@ -71,4 +81,16 @@ class Hasher:
         Raises a `ValueError` if the sequences are not the same length, or if
         any item falls outside the hasher's extent. Pass `skip_invalid=True`
         to get `None` for out-of-extent items instead of raising.
+        """
+
+    def hash_all_clamped(
+        self,
+        datetimes: Sequence[datetime],
+        longitudes: Sequence[float],
+        latitudes: Sequence[float],
+    ) -> list[int]:
+        """Hashes parallel sequences, clamping onto the hasher's boundary.
+
+        Raises a `ValueError` only if the sequences are not the same length.
+        No item can fall outside the extent, so there is no `skip_invalid`.
         """

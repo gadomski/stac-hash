@@ -37,7 +37,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 // TODO Configurable datetime precision
 // TODO Configurable output type (currently hardcoded to u64)
 // TODO Configurable primary sort order (currently hardcoded to datetime)
-// TODO Configurable clamping (instead of erroring)
 #[derive(Debug)]
 pub struct Hasher {
     start_datetime: DateTime<Utc>,
@@ -130,14 +129,18 @@ impl Hasher {
 
     /// Converts a datetime and a Point into a hash.
     ///
+    /// Returns an error if the datetime or the point falls outside of this
+    /// hasher's extent. Use [Hasher::hash_clamped] to clamp onto the boundary
+    /// instead of erroring.
+    ///
     /// # Examples
     ///
     /// ```
     /// use stac_hash::Hasher;
     /// use chrono::{Utc, TimeZone};
     ///
-    /// let start = Utc.ymd(2023, 1, 1).and_hms(0, 0, 0);
-    /// let end = Utc.ymd(2024, 1, 1).and_hms(0, 0, 0);
+    /// let start = Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap();
+    /// let end = Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
     /// let hasher = Hasher::global(start, end).unwrap();
     /// let hash = hasher.hash(start, (0., 0.)).unwrap();
     /// ```
@@ -152,7 +155,52 @@ impl Hasher {
         if point.longitude < self.min_longitude || point.longitude > self.max_longitude {
             return Err(Error::InvalidLongitude(point.longitude));
         }
+        Ok(self.interleave(datetime, point))
+    }
 
+    /// Converts a datetime and a Point into a hash, clamping anything outside
+    /// of this hasher's extent onto its boundary.
+    ///
+    /// This cannot fail. A datetime before `start_datetime` hashes as
+    /// `start_datetime`, a longitude west of the minimum hashes as that
+    /// minimum, and so on. Each clamped value is logged at warn level. Use
+    /// [Hasher::hash] to get an error instead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stac_hash::Hasher;
+    /// use chrono::{Utc, TimeZone};
+    ///
+    /// let start = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
+    /// let end = Utc.with_ymd_and_hms(2027, 1, 1, 0, 0, 0).unwrap();
+    /// let hasher = Hasher::new(start, end, (-109., 37.), (-102., 41.)).unwrap();
+    ///
+    /// // Well west of the bounding box, so it hashes as if it were on the edge.
+    /// let hash = hasher.hash_clamped(start, (-120., 40.));
+    /// assert_eq!(hash, hasher.hash(start, (-109., 40.)).unwrap());
+    /// ```
+    pub fn hash_clamped(&self, datetime: DateTime<Utc>, point: impl Into<Point>) -> u64 {
+        let point = point.into();
+        if datetime < self.start_datetime || datetime > self.end_datetime {
+            log::warn!("datetime outside of the hasher's temporal extent: {datetime}");
+        }
+        if point.latitude < self.min_latitude || point.latitude > self.max_latitude {
+            log::warn!(
+                "latitude outside of the hasher's spatial extent: {}",
+                point.latitude
+            );
+        }
+        if point.longitude < self.min_longitude || point.longitude > self.max_longitude {
+            log::warn!(
+                "longitude outside of the hasher's spatial extent: {}",
+                point.longitude
+            );
+        }
+        self.interleave(datetime, point)
+    }
+
+    fn interleave(&self, datetime: DateTime<Utc>, point: Point) -> u64 {
         let datetime_normalized = (((datetime.timestamp_millis()
             - self.start_datetime.timestamp_millis()) as f64)
             / self.datetime_range_millis)
@@ -174,7 +222,7 @@ impl Hasher {
             hash |= ((latitude_quantized >> src) & 1) << (dst + 1);
             hash |= ((datetime_quantized >> src) & 1) << (dst + 2);
         }
-        Ok(hash)
+        hash
     }
 }
 
@@ -227,6 +275,63 @@ mod tests {
             )
             .unwrap();
         assert_eq!(hash, 3024785829217804842);
+    }
+
+    #[fixture]
+    fn colorado(start_datetime: DateTime<Utc>, end_datetime: DateTime<Utc>) -> Hasher {
+        Hasher::new(start_datetime, end_datetime, (-109., 37.), (-102., 41.)).unwrap()
+    }
+
+    #[rstest]
+    fn hash_clamped_matches_hash_inside_the_extent(
+        colorado: Hasher,
+        start_datetime: DateTime<Utc>,
+        longmont: Point,
+    ) {
+        assert_eq!(
+            colorado.hash_clamped(start_datetime, longmont),
+            colorado.hash(start_datetime, longmont).unwrap()
+        );
+    }
+
+    #[rstest]
+    fn hash_clamped_clamps_longitude(colorado: Hasher, start_datetime: DateTime<Utc>) {
+        assert_eq!(
+            colorado.hash_clamped(start_datetime, (-120., 40.)),
+            colorado.hash(start_datetime, (-109., 40.)).unwrap()
+        );
+    }
+
+    #[rstest]
+    fn hash_clamped_clamps_latitude(colorado: Hasher, start_datetime: DateTime<Utc>) {
+        assert_eq!(
+            colorado.hash_clamped(start_datetime, (-105., 90.)),
+            colorado.hash(start_datetime, (-105., 41.)).unwrap()
+        );
+    }
+
+    #[rstest]
+    fn hash_clamped_clamps_datetime(
+        colorado: Hasher,
+        end_datetime: DateTime<Utc>,
+        longmont: Point,
+    ) {
+        let beyond = end_datetime + chrono::Duration::days(365);
+        assert_eq!(
+            colorado.hash_clamped(beyond, longmont),
+            colorado.hash(end_datetime, longmont).unwrap()
+        );
+    }
+
+    #[rstest]
+    fn hash_still_errors_outside_the_extent(colorado: Hasher, start_datetime: DateTime<Utc>) {
+        assert!(colorado.hash(start_datetime, (-120., 40.)).is_err());
+        assert!(colorado.hash(start_datetime, (-105., 90.)).is_err());
+        assert!(
+            colorado
+                .hash(start_datetime - chrono::Duration::days(1), (-105., 40.))
+                .is_err()
+        );
     }
 
     #[rstest]

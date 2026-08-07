@@ -26,6 +26,7 @@ exclude = [
 
 [dependencies]
 chrono = "0.4.45"
+log = "0.4.33"
 thiserror = "2.0.19"
 
 [dev-dependencies]
