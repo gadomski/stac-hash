@@ -6,12 +6,22 @@
 //!
 //! ```
 //! use stac_hash::Hasher;
-//! use chrono::Utc;
+//! use chrono::{Utc, TimeZone};
 //!
 //! let start_datetime = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
 //! let end_datetime = Utc.with_ymd_and_hms(2027, 1, 1, 0, 0, 0).unwrap();
-//! let hasher = Hasher::global(start_datetime, end_datetime);
-//! let hash = hasher.hash(Utc::now(), Point { longitude: , latitude:  });
+//! let hasher = Hasher::global(start_datetime, end_datetime).unwrap();
+//! let hash = hasher.hash(start_datetime, (-105., 40.)).unwrap();
+//!
+//! // Later datetimes sort after earlier ones
+//! let hash_later = hasher.hash(end_datetime, (-105., 40.)).unwrap();
+//! assert!(hash < hash_later);
+//!
+//! // Latitudes and longitudes sort as well
+//! let hash_right = hasher.hash(start_datetime, (-104., 40.)).unwrap();
+//! assert!(hash < hash_right);
+//! let hash_above = hasher.hash(start_datetime, (-105., 41.)).unwrap();
+//! assert!(hash < hash_above);
 //! ```
 
 use chrono::{DateTime, Utc};
@@ -20,14 +30,14 @@ use thiserror::Error;
 const BITS_PER_DIMENSION: u8 = 21; // 63 / 3
 const MAX_VALUE: f64 = ((1u64 << BITS_PER_DIMENSION) - 1) as f64;
 
+/// Crate-specific result type.
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Create sortable spatio-temporal hashes with millisecond temporal precision.
-///
-/// TODO Configurable datetime precision
-/// TODO Configurable output type (currently hardcoded to u64)
-/// TODO Configurable primary sort order (currently hardcoded to datetime)
-/// TODO Configurable clamping (instead of erroring)
+/// A structure for creating sortable spatio-temporal hashes with millisecond temporal precision.
+// TODO Configurable datetime precision
+// TODO Configurable output type (currently hardcoded to u64)
+// TODO Configurable primary sort order (currently hardcoded to datetime)
+// TODO Configurable clamping (instead of erroring)
 #[derive(Debug)]
 pub struct Hasher {
     start_datetime: DateTime<Utc>,
@@ -66,11 +76,34 @@ pub enum Error {
 
 impl Hasher {
     /// Creates a new hasher for the given datetime and the global extents.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stac_hash::Hasher;
+    /// use chrono::{Utc, TimeZone};
+    ///
+    /// let start_datetime = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
+    /// let end_datetime = Utc.with_ymd_and_hms(2027, 1, 1, 0, 0, 0).unwrap();
+    /// let hasher = Hasher::global(start_datetime, end_datetime).unwrap();
+    /// ```
     pub fn global(start_datetime: DateTime<Utc>, end_datetime: DateTime<Utc>) -> Result<Self> {
         Self::new(start_datetime, end_datetime, (-180., -90.), (180., 90.))
     }
 
     /// Creates a new hasher for the given datetime and spatial intervals.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stac_hash::Hasher;
+    /// use chrono::{Utc, TimeZone};
+    ///
+    /// // CONUS (roughly)
+    /// let start_datetime = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
+    /// let end_datetime = Utc.with_ymd_and_hms(2027, 1, 1, 0, 0, 0).unwrap();
+    /// let hasher = Hasher::new(start_datetime, end_datetime, (-125., 25.), (-66., 50.)).unwrap();
+    /// ```
     pub fn new(
         start_datetime: DateTime<Utc>,
         end_datetime: DateTime<Utc>,
@@ -96,6 +129,18 @@ impl Hasher {
     }
 
     /// Converts a datetime and a Point into a hash.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stac_hash::Hasher;
+    /// use chrono::{Utc, TimeZone};
+    ///
+    /// let start = Utc.ymd(2023, 1, 1).and_hms(0, 0, 0);
+    /// let end = Utc.ymd(2024, 1, 1).and_hms(0, 0, 0);
+    /// let hasher = Hasher::global(start, end).unwrap();
+    /// let hash = hasher.hash(start, (0., 0.)).unwrap();
+    /// ```
     pub fn hash(&self, datetime: DateTime<Utc>, point: impl Into<Point>) -> Result<u64> {
         let point = point.into();
         if datetime < self.start_datetime || datetime > self.end_datetime {
