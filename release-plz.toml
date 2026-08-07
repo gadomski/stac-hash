@@ -3,4 +3,5 @@ git_tag_name = "v{{ version }}"
 
 [[package]]
 name = "stac-hash-python"
+publish = false
 release = false
