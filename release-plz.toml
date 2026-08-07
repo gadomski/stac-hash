@@ -1,0 +1,6 @@
+[workspace]
+git_tag_name = "v{{ version }}"
+
+[[package]]
+name = "stac-hash-python"
+release = false

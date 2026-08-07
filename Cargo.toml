@@ -11,6 +11,18 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 keywords = ["stac", "geospatial", "spatiotemporal", "hash", "morton"]
 categories = ["science::geo", "algorithms", "data-structures"]
+exclude = [
+    "/.github",
+    "/.gitignore",
+    "/.python-version",
+    "/docs",
+    "/mkdocs.yml",
+    "/pyproject.toml",
+    "/python",
+    "/release-plz.toml",
+    "/tests",
+    "/uv.lock",
+]
 
 [dependencies]
 chrono = "0.4.45"
