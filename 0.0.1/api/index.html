@@ -425,6 +425,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stac_hash.Hasher.hash_all_clamped" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;hash_all_clamped
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stac_hash.Hasher.hash_clamped" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;hash_clamped
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -570,6 +592,55 @@ Without a <code>bbox</code> the hasher covers the whole world.</p>
 <p>Raises a <code>ValueError</code> if the sequences are not the same length, or if
 any item falls outside the hasher's extent. Pass <code>skip_invalid=True</code>
 to get <code>None</code> for out-of-extent items instead of raising.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="stac_hash.Hasher.hash_all_clamped" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">hash_all_clamped</span>
+
+
+<a href="#stac_hash.Hasher.hash_all_clamped" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">hash_all_clamped</span><span class="p">(</span>
+    <span class="n">datetimes</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="datetime.datetime">datetime</span></span><span class="p">],</span>
+    <span class="n">longitudes</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">],</span>
+    <span class="n">latitudes</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Hashes parallel sequences, clamping onto the hasher's boundary.</p>
+<p>Raises a <code>ValueError</code> only if the sequences are not the same length.
+No item can fall outside the extent, so there is no <code>skip_invalid</code>.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="stac_hash.Hasher.hash_clamped" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">hash_clamped</span>
+
+
+<a href="#stac_hash.Hasher.hash_clamped" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">hash_clamped</span><span class="p">(</span><span class="n">datetime</span><span class="p">:</span> <span class="n"><span title="datetime.datetime">datetime</span></span><span class="p">,</span> <span class="n">longitude</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n">latitude</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Hashes a datetime and a point, clamping onto the hasher's boundary.</p>
+<p>Unlike <code>hash</code>, this never raises for out-of-extent input. A datetime
+before the hasher's start hashes as that start, a longitude west of
+the minimum hashes as that minimum, and so on.</p>
 
 
     </div>
