@@ -499,6 +499,14 @@
 </code></pre></div>
 <p>Pass <code>bbox=(min_lon, min_lat, max_lon, max_lat)</code> to hash against a smaller extent, and use <code>hash_all(datetimes, longitudes, latitudes)</code> to hash a batch in one call. Datetimes must be timezone-aware, and the sequences must be the same length. Out-of-extent input raises <code>ValueError</code>; pass <code>skip_invalid=True</code> to <code>hash_all</code> to get <code>None</code> for those items instead of raising.</p>
 <p>To clamp instead of erroring, use <code>hash_clamped</code> and <code>hash_all_clamped</code>. They mirror the Rust <code>Hasher::hash_clamped</code> method: anything outside the extent is pinned to the nearest boundary, in time as well as space, so they never raise for out-of-range input.</p>
+<p>Each clamped value is logged as a warning through the standard library's <code>logging</code>, on a logger named <code>stac_hash</code>. Nothing is printed unless you configure logging:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>WARNING:stac_hash:longitude outside of the hasher&#39;s spatial extent: -120
+</code></pre></div>
+<p>Silence them with <code>logging.getLogger("stac_hash").setLevel(logging.ERROR)</code>.</p>
 <h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
 <p>Each of datetime, latitude, and longitude is normalized to <code>0..1</code> within the hasher's extent, then quantized to a 21-bit integer. Those three values are bit-interleaved into a single <code>u64</code>, using 63 of its 64 bits. The datetime bit occupies the most significant slot of each interleaved triple, so sorting by hash orders coarsely by time first, then latitude, then longitude.</p>
 <p>The usual Z-order caveat applies: nearby hashes always mean nearby items, but nearby items can occasionally land far apart in hash space when they straddle a high-order boundary.</p>
