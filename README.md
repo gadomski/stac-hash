@@ -1,6 +1,9 @@
 # stac-hash
 
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/gadomski/stac-hash/pr.yml?branch=main&style=for-the-badge)](https://github.com/gadomski/stac-hash/actions/workflows/pr.yml)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/gadomski/stac-hash/docs.yml?branch=main&style=for-the-badge&label=docs)](https://github.com/gadomski/stac-hash/actions/workflows/docs.yml)
+[![Crates.io Version](https://img.shields.io/crates/v/stac-hash?style=for-the-badge)](https://crates.io/crates/stac-hash)
+[![PyPI - Version](https://img.shields.io/pypi/v/stac-hash?style=for-the-badge)](https://pypi.org/project/stac-hash/)
 
 Sortable spatio-temporal hashes for [STAC](https://stacspec.org/)
 [items](https://github.com/radiantearth/stac-spec/blob/master/item-spec/item-spec.md).
