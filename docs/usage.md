@@ -1,7 +1,5 @@
 # Usage
 
-`stac-hash` is not yet published to crates.io or PyPI, so the install commands below don't work yet. This note will disappear once the first release goes out.
-
 ## Rust
 
 ```sh
