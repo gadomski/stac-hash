@@ -90,6 +90,37 @@ def test_config_rejects_unknown_encoding(hasher: Hasher):
         hasher.config("base64")
 
 
+def test_constructor_rejects_reversed_temporal_extent(
+    start_datetime: datetime, end_datetime: datetime
+):
+    with pytest.raises(ValueError, match="end datetime must be after start datetime"):
+        Hasher(end_datetime, start_datetime)
+    with pytest.raises(ValueError, match="end datetime must be after start datetime"):
+        Hasher(start_datetime, start_datetime)
+
+
+def test_constructor_rejects_invalid_longitude_extent(
+    start_datetime: datetime, end_datetime: datetime
+):
+    with pytest.raises(ValueError, match="longitude extent"):
+        Hasher(start_datetime, end_datetime, bbox=(-102.0, 37.0, -109.0, 41.0))
+    with pytest.raises(ValueError, match="longitude extent"):
+        Hasher(start_datetime, end_datetime, bbox=(-181.0, 37.0, -109.0, 41.0))
+    with pytest.raises(ValueError, match="longitude extent"):
+        Hasher(start_datetime, end_datetime, bbox=(-109.0, 37.0, 181.0, 41.0))
+
+
+def test_constructor_rejects_invalid_latitude_extent(
+    start_datetime: datetime, end_datetime: datetime
+):
+    with pytest.raises(ValueError, match="latitude extent"):
+        Hasher(start_datetime, end_datetime, bbox=(-109.0, 41.0, -102.0, 37.0))
+    with pytest.raises(ValueError, match="latitude extent"):
+        Hasher(start_datetime, end_datetime, bbox=(-109.0, -91.0, -102.0, 41.0))
+    with pytest.raises(ValueError, match="latitude extent"):
+        Hasher(start_datetime, end_datetime, bbox=(-109.0, 37.0, -102.0, 91.0))
+
+
 def test_hash_clamped_matches_hash_inside_the_extent(
     colorado: Hasher, start_datetime: datetime
 ):

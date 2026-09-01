@@ -78,6 +78,18 @@ pub enum Error {
     /// The longitude is outside of the hasher's spatial extent.
     #[error("longitude outside of the hasher's spatial extent: {0}")]
     InvalidLongitude(f64),
+
+    /// The temporal extent is empty or reversed.
+    #[error("end datetime must be after start datetime")]
+    InvalidTemporalExtent,
+
+    /// The longitude extent is outside of WGS84 bounds, empty, or reversed.
+    #[error("longitude extent must be within -180..180 and west must be less than east")]
+    InvalidLongitudeExtent,
+
+    /// The latitude extent is outside of WGS84 bounds, empty, or reversed.
+    #[error("latitude extent must be within -90..90 and south must be less than north")]
+    InvalidLatitudeExtent,
 }
 
 impl Hasher {
@@ -118,6 +130,21 @@ impl Hasher {
     ) -> Result<Self> {
         let min = min.into();
         let max = max.into();
+        if end_datetime <= start_datetime {
+            return Err(Error::InvalidTemporalExtent);
+        }
+        if !valid_longitude(min.longitude)
+            || !valid_longitude(max.longitude)
+            || min.longitude >= max.longitude
+        {
+            return Err(Error::InvalidLongitudeExtent);
+        }
+        if !valid_latitude(min.latitude)
+            || !valid_latitude(max.latitude)
+            || min.latitude >= max.latitude
+        {
+            return Err(Error::InvalidLatitudeExtent);
+        }
         let datetime_range_millis = (end_datetime - start_datetime).num_milliseconds();
         let longitude_range = max.longitude - min.longitude;
         let latitude_range = max.latitude - min.latitude;
@@ -271,6 +298,14 @@ impl From<(f64, f64)> for Point {
     }
 }
 
+fn valid_longitude(longitude: f64) -> bool {
+    (-180.0..=180.0).contains(&longitude)
+}
+
+fn valid_latitude(latitude: f64) -> bool {
+    (-90.0..=90.0).contains(&latitude)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::Point;
@@ -319,6 +354,59 @@ mod tests {
     #[fixture]
     fn colorado(start_datetime: DateTime<Utc>, end_datetime: DateTime<Utc>) -> Hasher {
         Hasher::new(start_datetime, end_datetime, (-109., 37.), (-102., 41.)).unwrap()
+    }
+
+    #[rstest]
+    fn new_rejects_reversed_temporal_extent(
+        start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
+    ) {
+        assert!(matches!(
+            Hasher::global(end_datetime, start_datetime),
+            Err(super::Error::InvalidTemporalExtent)
+        ));
+        assert!(matches!(
+            Hasher::global(start_datetime, start_datetime),
+            Err(super::Error::InvalidTemporalExtent)
+        ));
+    }
+
+    #[rstest]
+    fn new_rejects_invalid_longitude_extent(
+        start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
+    ) {
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-102., 37.), (-109., 41.)),
+            Err(super::Error::InvalidLongitudeExtent)
+        ));
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-181., 37.), (-109., 41.)),
+            Err(super::Error::InvalidLongitudeExtent)
+        ));
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-109., 37.), (181., 41.)),
+            Err(super::Error::InvalidLongitudeExtent)
+        ));
+    }
+
+    #[rstest]
+    fn new_rejects_invalid_latitude_extent(
+        start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
+    ) {
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-109., 41.), (-102., 37.)),
+            Err(super::Error::InvalidLatitudeExtent)
+        ));
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-109., -91.), (-102., 41.)),
+            Err(super::Error::InvalidLatitudeExtent)
+        ));
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-109., 37.), (-102., 91.)),
+            Err(super::Error::InvalidLatitudeExtent)
+        ));
     }
 
     #[rstest]
