@@ -1,7 +1,8 @@
-use ::stac_hash::{Error, Hasher as RustHasher};
-use chrono::{DateTime, FixedOffset, Utc};
+use ::stac_hash::{Encoding, Error, Hasher as RustHasher, encode_hash as rust_encode_hash};
+use chrono::{DateTime, FixedOffset, SecondsFormat, Utc};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::types::{PyDict, PyList};
 
 /// Creates sortable spatio-temporal hashes.
 ///
@@ -45,6 +46,49 @@ impl Hasher {
         self.0
             .hash(datetime.with_timezone(&Utc), (longitude, latitude))
             .map_err(to_py_err)
+    }
+
+    /// Hashes a datetime and a point, then encodes the hash value.
+    fn hash_encoded(
+        &self,
+        datetime: DateTime<FixedOffset>,
+        longitude: f64,
+        latitude: f64,
+        encoding: &str,
+    ) -> PyResult<String> {
+        self.0
+            .hash_encoded(
+                datetime.with_timezone(&Utc),
+                (longitude, latitude),
+                parse_encoding(encoding)?,
+            )
+            .map_err(to_py_err)
+    }
+
+    /// Returns STAC Hash Extension fields for this hasher.
+    fn config<'py>(&self, py: Python<'py>, encoding: &str) -> PyResult<Bound<'py, PyDict>> {
+        let config = self.0.config(parse_encoding(encoding)?);
+        let dict = PyDict::new(py);
+        dict.set_item("hash:algorithm", config.algorithm.as_str())?;
+        dict.set_item("hash:dtype", config.dtype.as_str())?;
+        dict.set_item("hash:encoding", config.encoding.as_str())?;
+        dict.set_item("hash:spatial_precision", config.spatial_precision)?;
+        dict.set_item("hash:temporal_precision", config.temporal_precision)?;
+        dict.set_item(
+            "hash:spatial_extent",
+            PyList::new(py, config.spatial_extent)?,
+        )?;
+        dict.set_item(
+            "hash:temporal_extent",
+            PyList::new(
+                py,
+                [
+                    format_datetime(config.temporal_extent.0),
+                    format_datetime(config.temporal_extent.1),
+                ],
+            )?,
+        )?;
+        Ok(dict)
     }
 
     /// Hashes a datetime and a point into an `int`, clamping anything outside
@@ -129,14 +173,35 @@ impl Hasher {
     }
 }
 
+fn parse_encoding(encoding: &str) -> PyResult<Encoding> {
+    match encoding {
+        "integer" => Ok(Encoding::Integer),
+        "base16" => Ok(Encoding::Base16),
+        _ => Err(PyValueError::new_err(format!(
+            "unsupported encoding: {encoding}"
+        ))),
+    }
+}
+
+fn format_datetime(datetime: DateTime<Utc>) -> String {
+    datetime.to_rfc3339_opts(SecondsFormat::Millis, true)
+}
+
 fn to_py_err(error: Error) -> PyErr {
     PyValueError::new_err(error.to_string())
+}
+
+/// Encodes a hash value using one of the STAC Hash Extension encodings.
+#[pyfunction]
+fn encode_hash(hash: u64, encoding: &str) -> PyResult<String> {
+    Ok(rust_encode_hash(hash, parse_encoding(encoding)?))
 }
 
 #[pymodule]
 fn stac_hash(m: &Bound<'_, PyModule>) -> PyResult<()> {
     pyo3_log::init();
     m.add_class::<Hasher>()?;
+    m.add_function(wrap_pyfunction!(encode_hash, m)?)?;
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     Ok(())
 }
