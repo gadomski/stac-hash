@@ -71,11 +71,13 @@
       "oneOf": [
         {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 18446744073709551615
         },
         {
           "type": "string",
-          "minLength": 1
+          "description": "A base16-encoded uint64 hash value.",
+          "pattern": "^[0-9a-f]{1,16}$"
         }
       ]
     },
@@ -87,31 +89,29 @@
       ]
     },
     "hash:dtype": {
-      "description": "The unsigned integer width into which the hash is packed.",
+      "description": "The unsigned integer width into which the hash is packed. Currently only uint64 is supported.",
       "type": "string",
       "enum": [
-        "uint32",
         "uint64"
       ]
     },
     "hash:encoding": {
-      "description": "The representation used for hash:hash in JSON.",
+      "description": "The representation used for hash:hash in JSON. Currently integer and base16 are supported.",
       "type": "string",
       "enum": [
         "integer",
-        "base64",
         "base16"
       ]
     },
     "hash:spatial_precision": {
-      "description": "The quantization step for latitude and longitude, in degrees.",
+      "description": "The coarsest approximate spatial quantization step for the configured extent, in degrees.",
       "type": "number",
       "exclusiveMinimum": 0
     },
     "hash:temporal_precision": {
-      "description": "The quantization step for datetime as an ISO 8601 duration.",
+      "description": "The datetime quantization step as an ISO 8601 duration. Currently fixed to millisecond precision.",
       "type": "string",
-      "pattern": "^P(?!$)(?:\\d+(?:[\\.,]\\d+)?Y)?(?:\\d+(?:[\\.,]\\d+)?M)?(?:\\d+(?:[\\.,]\\d+)?W)?(?:\\d+(?:[\\.,]\\d+)?D)?(?:T(?:\\d+(?:[\\.,]\\d+)?H)?(?:\\d+(?:[\\.,]\\d+)?M)?(?:\\d+(?:[\\.,]\\d+)?S)?)?$"
+      "const": "PT0.001S"
     },
     "hash:spatial_extent": {
       "description": "The spatial normalization bounds as [west, south, east, north].",

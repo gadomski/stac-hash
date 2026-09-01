@@ -32,7 +32,7 @@
   "hash:dtype": "uint64",
   "hash:encoding": "base16",
   "hash:spatial_precision": 0.000171661376953125,
-  "hash:temporal_precision": "PT1S",
+  "hash:temporal_precision": "PT0.001S",
   "hash:spatial_extent": [
     -180,
     -90,
