@@ -30,6 +30,12 @@ use thiserror::Error;
 const BITS_PER_DIMENSION: u8 = 21; // 63 / 3
 const MAX_VALUE: f64 = ((1u64 << BITS_PER_DIMENSION) - 1) as f64;
 
+mod config;
+
+pub use config::{
+    Algorithm, DType, Encoding, HashConfig, STAC_EXTENSION_SCHEMA_URL, TEMPORAL_PRECISION,
+};
+
 /// Crate-specific result type.
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -158,6 +164,24 @@ impl Hasher {
         Ok(self.interleave(datetime, point))
     }
 
+    /// Returns the STAC Hash Extension metadata for this hasher.
+    pub fn config(&self, encoding: Encoding) -> HashConfig {
+        HashConfig {
+            algorithm: Algorithm::Morton,
+            dtype: DType::Uint64,
+            encoding,
+            spatial_precision: self.longitude_range.max(self.latitude_range) / MAX_VALUE,
+            temporal_precision: TEMPORAL_PRECISION,
+            spatial_extent: [
+                self.min_longitude,
+                self.min_latitude,
+                self.max_longitude,
+                self.max_latitude,
+            ],
+            temporal_extent: (self.start_datetime, self.end_datetime),
+        }
+    }
+
     /// Converts a datetime and a Point into a hash, clamping anything outside
     /// of this hasher's extent onto its boundary.
     ///
@@ -239,7 +263,10 @@ impl From<(f64, f64)> for Point {
 mod tests {
     use crate::Point;
 
-    use super::Hasher;
+    use super::{
+        Algorithm, DType, Encoding, Hasher, MAX_VALUE, STAC_EXTENSION_SCHEMA_URL,
+        TEMPORAL_PRECISION,
+    };
     use chrono::{DateTime, TimeZone, Utc};
     use rstest::{fixture, rstest};
 
@@ -280,6 +307,51 @@ mod tests {
     #[fixture]
     fn colorado(start_datetime: DateTime<Utc>, end_datetime: DateTime<Utc>) -> Hasher {
         Hasher::new(start_datetime, end_datetime, (-109., 37.), (-102., 41.)).unwrap()
+    }
+
+    #[rstest]
+    fn global_config_matches_stac_extension_fields(
+        hasher: Hasher,
+        start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
+    ) {
+        let config = hasher.config(Encoding::Base16);
+        assert_eq!(config.algorithm, Algorithm::Morton);
+        assert_eq!(config.algorithm.as_str(), "morton");
+        assert_eq!(config.dtype, DType::Uint64);
+        assert_eq!(config.dtype.as_str(), "uint64");
+        assert_eq!(config.encoding, Encoding::Base16);
+        assert_eq!(config.encoding.as_str(), "base16");
+        assert_eq!(config.temporal_precision, TEMPORAL_PRECISION);
+        assert_eq!(config.temporal_precision, "PT0.001S");
+        assert_eq!(config.spatial_extent, [-180., -90., 180., 90.]);
+        assert_eq!(config.temporal_extent, (start_datetime, end_datetime));
+        assert_eq!(
+            STAC_EXTENSION_SCHEMA_URL,
+            "https://stac-extensions.github.io/hash/v1.0.0/schema.json"
+        );
+    }
+
+    #[rstest]
+    fn config_spatial_precision_uses_coarsest_dimension(hasher: Hasher) {
+        assert_eq!(
+            hasher.config(Encoding::Integer).spatial_precision,
+            360. / MAX_VALUE
+        );
+    }
+
+    #[rstest]
+    fn custom_config_uses_hasher_extents(
+        colorado: Hasher,
+        start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
+    ) {
+        let config = colorado.config(Encoding::Integer);
+        assert_eq!(config.encoding, Encoding::Integer);
+        assert_eq!(config.encoding.as_str(), "integer");
+        assert_eq!(config.spatial_extent, [-109., 37., -102., 41.]);
+        assert_eq!(config.temporal_extent, (start_datetime, end_datetime));
+        assert_eq!(config.spatial_precision, 7. / MAX_VALUE);
     }
 
     #[rstest]
