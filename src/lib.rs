@@ -41,9 +41,6 @@ pub use config::{
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// A structure for creating sortable spatio-temporal hashes with millisecond temporal precision.
-// TODO Configurable datetime precision
-// TODO Configurable output type (currently hardcoded to u64)
-// TODO Configurable primary sort order (currently hardcoded to datetime)
 #[derive(Debug)]
 pub struct Hasher {
     start_datetime: DateTime<Utc>,
