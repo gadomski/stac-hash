@@ -930,7 +930,6 @@ wheels = [
 
 [[package]]
 name = "stac-hash"
-version = "0.0.2"
 source = { editable = "." }
 
 [package.dev-dependencies]
