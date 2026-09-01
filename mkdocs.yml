@@ -11,6 +11,7 @@ exclude_docs: |
 nav:
   - Home: index.md
   - Usage: usage.md
+  - STAC Extension: stac-extension.md
   - API: api.md
 
 theme:

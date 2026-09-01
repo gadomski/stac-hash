@@ -15,6 +15,8 @@ for range scans.
 
 We have [Python](https://pypi.org/project/stac-hash/) and [Rust](https://crates.io/crates/stac-hash) packages.
 
+The proposed [STAC Hash Extension](https://gadomski.github.io/stac-hash/stac-extension/) defines how to store these hashes on STAC Items and Collections.
+
 ## License
 
 Licensed under either of

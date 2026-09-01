@@ -1,0 +1,69 @@
+{
+  "stac_version": "1.1.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/hash/v1.0.0/schema.json"
+  ],
+  "type": "Feature",
+  "id": "S2A_10SEG_20240214_0_L2A",
+  "collection": "sentinel-2-l2a-hash",
+  "bbox": [
+    -123.041,
+    49.208,
+    -122.902,
+    49.318
+  ],
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -123.041,
+          49.208
+        ],
+        [
+          -122.902,
+          49.208
+        ],
+        [
+          -122.902,
+          49.318
+        ],
+        [
+          -123.041,
+          49.318
+        ],
+        [
+          -123.041,
+          49.208
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "datetime": "2024-02-14T19:03:21Z",
+    "platform": "sentinel-2a",
+    "constellation": "sentinel-2",
+    "instruments": [
+      "msi"
+    ],
+    "gsd": 10,
+    "hash:hash": "4f6c9a1b03d2e870"
+  },
+  "links": [
+    {
+      "rel": "collection",
+      "href": "./collection.json",
+      "type": "application/json"
+    }
+  ],
+  "assets": {
+    "visual": {
+      "href": "https://example.com/sentinel-2-l2a/S2A_10SEG_20240214_0_L2A/visual.tif",
+      "type": "image/tiff; application=geotiff",
+      "roles": [
+        "visual"
+      ],
+      "title": "True color image"
+    }
+  }
+}
