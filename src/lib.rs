@@ -34,6 +34,7 @@ mod config;
 
 pub use config::{
     Algorithm, DType, Encoding, HashConfig, STAC_EXTENSION_SCHEMA_URL, TEMPORAL_PRECISION,
+    encode_hash,
 };
 
 /// Crate-specific result type.
@@ -164,6 +165,17 @@ impl Hasher {
         Ok(self.interleave(datetime, point))
     }
 
+    /// Hashes a datetime and point, then encodes the hash value.
+    pub fn hash_encoded(
+        &self,
+        datetime: DateTime<Utc>,
+        point: impl Into<Point>,
+        encoding: Encoding,
+    ) -> Result<String> {
+        self.hash(datetime, point)
+            .map(|hash| encode_hash(hash, encoding))
+    }
+
     /// Returns the STAC Hash Extension metadata for this hasher.
     pub fn config(&self, encoding: Encoding) -> HashConfig {
         HashConfig {
@@ -265,7 +277,7 @@ mod tests {
 
     use super::{
         Algorithm, DType, Encoding, Hasher, MAX_VALUE, STAC_EXTENSION_SCHEMA_URL,
-        TEMPORAL_PRECISION,
+        TEMPORAL_PRECISION, encode_hash,
     };
     use chrono::{DateTime, TimeZone, Utc};
     use rstest::{fixture, rstest};
@@ -307,6 +319,37 @@ mod tests {
     #[fixture]
     fn colorado(start_datetime: DateTime<Utc>, end_datetime: DateTime<Utc>) -> Hasher {
         Hasher::new(start_datetime, end_datetime, (-109., 37.), (-102., 41.)).unwrap()
+    }
+
+    #[rstest]
+    fn encode_hash_supports_stac_extension_encodings() {
+        assert_eq!(
+            encode_hash(3024785829217804842, Encoding::Integer),
+            "3024785829217804842"
+        );
+        assert_eq!(
+            encode_hash(3024785829217804842, Encoding::Base16),
+            "29fa32af8829a22a"
+        );
+        assert_eq!(encode_hash(0, Encoding::Base16), "0000000000000000");
+    }
+
+    #[rstest]
+    fn hash_encoded_matches_hash_then_encode(hasher: Hasher, longmont: Point) {
+        let datetime = Utc.with_ymd_and_hms(2026, 6, 14, 12, 0, 0).unwrap();
+        let hash = hasher.hash(datetime, longmont).unwrap();
+        assert_eq!(
+            hasher
+                .hash_encoded(datetime, longmont, Encoding::Base16)
+                .unwrap(),
+            encode_hash(hash, Encoding::Base16)
+        );
+        assert_eq!(
+            hasher
+                .hash_encoded(datetime, longmont, Encoding::Integer)
+                .unwrap(),
+            encode_hash(hash, Encoding::Integer)
+        );
     }
 
     #[rstest]

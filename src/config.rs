@@ -59,6 +59,14 @@ impl Encoding {
     }
 }
 
+/// Encodes a hash value using one of the STAC Hash Extension encodings.
+pub fn encode_hash(hash: u64, encoding: Encoding) -> String {
+    match encoding {
+        Encoding::Integer => hash.to_string(),
+        Encoding::Base16 => format!("{hash:016x}"),
+    }
+}
+
 /// STAC Hash Extension metadata for a hasher.
 #[derive(Debug, Clone, PartialEq)]
 pub struct HashConfig {
