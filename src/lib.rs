@@ -32,10 +32,7 @@ const MAX_VALUE: f64 = ((1u64 << BITS_PER_DIMENSION) - 1) as f64;
 
 mod config;
 
-pub use config::{
-    Algorithm, DType, Encoding, HashConfig, STAC_EXTENSION_SCHEMA_URL, TEMPORAL_PRECISION,
-    encode_hash,
-};
+pub use config::{Encoding, encode_hash};
 
 /// Crate-specific result type.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -201,13 +198,14 @@ impl Hasher {
     }
 
     /// Returns the STAC Hash Extension metadata for this hasher.
-    pub fn config(&self, encoding: Encoding) -> HashConfig {
-        HashConfig {
-            algorithm: Algorithm::Morton,
-            dtype: DType::Uint64,
+    #[cfg(test)]
+    pub(crate) fn config(&self, encoding: Encoding) -> config::HashConfig {
+        config::HashConfig {
+            algorithm: config::Algorithm::Morton,
+            dtype: config::DType::Uint64,
             encoding,
             spatial_precision: self.longitude_range.max(self.latitude_range) / MAX_VALUE,
-            temporal_precision: TEMPORAL_PRECISION,
+            temporal_precision: config::TEMPORAL_PRECISION,
             spatial_extent: [
                 self.min_longitude,
                 self.min_latitude,
@@ -306,11 +304,9 @@ fn valid_latitude(latitude: f64) -> bool {
 #[cfg(test)]
 mod tests {
     use crate::Point;
+    use crate::config::{Algorithm, DType, STAC_EXTENSION_SCHEMA_URL, TEMPORAL_PRECISION};
 
-    use super::{
-        Algorithm, DType, Encoding, Hasher, MAX_VALUE, STAC_EXTENSION_SCHEMA_URL,
-        TEMPORAL_PRECISION, encode_hash,
-    };
+    use super::{Encoding, Hasher, MAX_VALUE, encode_hash};
     use chrono::{DateTime, TimeZone, Utc};
     use rstest::{fixture, rstest};
 

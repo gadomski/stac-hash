@@ -83,7 +83,6 @@ let hasher = Hasher::global(
 )
 .unwrap();
 
-let collection_fields = hasher.config(Encoding::Base16);
 let item_hash = hasher
     .hash_encoded(
         Utc.with_ymd_and_hms(2026, 6, 14, 12, 0, 0).unwrap(),
