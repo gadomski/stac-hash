@@ -1,0 +1,53 @@
+{
+  "stac_version": "1.1.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/hash/v0.1.0/schema.json"
+  ],
+  "type": "Collection",
+  "id": "sentinel-2-l2a-hash",
+  "title": "Sentinel-2 L2A Hash Example",
+  "description": "Example Sentinel-2 L2A collection with Collection-level hash configuration for spatio-temporal sorting.",
+  "license": "proprietary",
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2015-06-23T00:00:00Z",
+          "2035-01-01T00:00:00Z"
+        ]
+      ]
+    }
+  },
+  "hash:algorithm": "morton",
+  "hash:dtype": "uint64",
+  "hash:encoding": "base16",
+  "hash:spatial_precision": 0.000171661376953125,
+  "hash:temporal_precision": "PT0.001S",
+  "hash:spatial_extent": [
+    -180,
+    -90,
+    180,
+    90
+  ],
+  "hash:temporal_extent": [
+    "2015-06-23T00:00:00Z",
+    "2035-01-01T00:00:00Z"
+  ],
+  "links": [
+    {
+      "rel": "item",
+      "href": "./item.json",
+      "type": "application/geo+json"
+    }
+  ]
+}

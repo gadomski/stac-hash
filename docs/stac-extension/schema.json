@@ -1,0 +1,202 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://stac-extensions.github.io/hash/v0.1.0/schema.json#",
+  "title": "Hash Extension",
+  "description": "STAC Hash Extension for sortable spatio-temporal hashes in STAC Items and their Collection-level encoding parameters.",
+  "type": "object",
+  "required": [
+    "stac_extensions",
+    "type"
+  ],
+  "properties": {
+    "stac_extensions": {
+      "type": "array",
+      "contains": {
+        "const": "https://stac-extensions.github.io/hash/v0.1.0/schema.json"
+      }
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Collection",
+        "Feature"
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$comment": "This validates the hash field in STAC Item properties.",
+      "type": "object",
+      "required": [
+        "type",
+        "properties"
+      ],
+      "properties": {
+        "type": {
+          "const": "Feature"
+        },
+        "properties": {
+          "$ref": "#/definitions/itemFields"
+        }
+      }
+    },
+    {
+      "$comment": "This validates the Collection-level hash configuration fields.",
+      "type": "object",
+      "required": [
+        "type",
+        "hash:spatial_extent",
+        "hash:temporal_extent"
+      ],
+      "properties": {
+        "type": {
+          "const": "Collection"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/collectionFields"
+        }
+      ]
+    }
+  ],
+  "definitions": {
+    "hash:hash": {
+      "description": "The computed sortable hash value for a STAC Item.",
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        {
+          "type": "string",
+          "description": "A base16-encoded uint64 hash value.",
+          "pattern": "^[0-9a-f]{1,16}$"
+        }
+      ]
+    },
+    "hash:algorithm": {
+      "description": "The space-filling curve used to compute the hash.",
+      "type": "string",
+      "default": "morton",
+      "enum": [
+        "morton"
+      ]
+    },
+    "hash:dtype": {
+      "description": "The unsigned integer width into which the hash is packed. Currently only uint64 is supported.",
+      "type": "string",
+      "default": "uint64",
+      "enum": [
+        "uint64"
+      ]
+    },
+    "hash:encoding": {
+      "description": "The representation used for hash:hash in JSON. Currently integer and base16 are supported.",
+      "type": "string",
+      "default": "integer",
+      "enum": [
+        "integer",
+        "base16"
+      ]
+    },
+    "hash:spatial_precision": {
+      "description": "The coarsest approximate spatial quantization step for the configured extent, in degrees.",
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "hash:temporal_precision": {
+      "description": "The datetime quantization step as an ISO 8601 duration. Currently fixed to millisecond precision.",
+      "type": "string",
+      "default": "PT0.001S",
+      "const": "PT0.001S"
+    },
+    "hash:spatial_extent": {
+      "description": "The spatial normalization bounds as [west, south, east, north].",
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": [
+        {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        }
+      ],
+      "additionalItems": false
+    },
+    "hash:temporal_extent": {
+      "description": "The temporal normalization bounds as [start, end]. Both bounds are concrete datetimes.",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "itemFields": {
+      "$comment": "Hash fields allowed in STAC Item properties.",
+      "type": "object",
+      "required": [
+        "hash:hash"
+      ],
+      "properties": {
+        "hash:hash": {
+          "$ref": "#/definitions/hash:hash"
+        }
+      },
+      "patternProperties": {
+        "^(?!hash:)": {}
+      },
+      "additionalProperties": false
+    },
+    "collectionFields": {
+      "$comment": "Hash fields allowed at the STAC Collection top level.",
+      "type": "object",
+      "properties": {
+        "hash:algorithm": {
+          "$ref": "#/definitions/hash:algorithm"
+        },
+        "hash:dtype": {
+          "$ref": "#/definitions/hash:dtype"
+        },
+        "hash:encoding": {
+          "$ref": "#/definitions/hash:encoding"
+        },
+        "hash:spatial_precision": {
+          "$ref": "#/definitions/hash:spatial_precision"
+        },
+        "hash:temporal_precision": {
+          "$ref": "#/definitions/hash:temporal_precision"
+        },
+        "hash:spatial_extent": {
+          "$ref": "#/definitions/hash:spatial_extent"
+        },
+        "hash:temporal_extent": {
+          "$ref": "#/definitions/hash:temporal_extent"
+        }
+      },
+      "patternProperties": {
+        "^(?!hash:)": {}
+      },
+      "additionalProperties": false
+    }
+  }
+}

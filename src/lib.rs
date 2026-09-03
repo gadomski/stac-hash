@@ -30,13 +30,14 @@ use thiserror::Error;
 const BITS_PER_DIMENSION: u8 = 21; // 63 / 3
 const MAX_VALUE: f64 = ((1u64 << BITS_PER_DIMENSION) - 1) as f64;
 
+mod config;
+
+pub use config::{Encoding, encode_hash};
+
 /// Crate-specific result type.
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// A structure for creating sortable spatio-temporal hashes with millisecond temporal precision.
-// TODO Configurable datetime precision
-// TODO Configurable output type (currently hardcoded to u64)
-// TODO Configurable primary sort order (currently hardcoded to datetime)
 #[derive(Debug)]
 pub struct Hasher {
     start_datetime: DateTime<Utc>,
@@ -71,6 +72,18 @@ pub enum Error {
     /// The longitude is outside of the hasher's spatial extent.
     #[error("longitude outside of the hasher's spatial extent: {0}")]
     InvalidLongitude(f64),
+
+    /// The temporal extent is empty or reversed.
+    #[error("end datetime must be after start datetime")]
+    InvalidTemporalExtent,
+
+    /// The longitude extent is outside of WGS84 bounds, empty, or reversed.
+    #[error("longitude extent must be within -180..180 and west must be less than east")]
+    InvalidLongitudeExtent,
+
+    /// The latitude extent is outside of WGS84 bounds, empty, or reversed.
+    #[error("latitude extent must be within -90..90 and south must be less than north")]
+    InvalidLatitudeExtent,
 }
 
 impl Hasher {
@@ -111,6 +124,21 @@ impl Hasher {
     ) -> Result<Self> {
         let min = min.into();
         let max = max.into();
+        if end_datetime <= start_datetime {
+            return Err(Error::InvalidTemporalExtent);
+        }
+        if !valid_longitude(min.longitude)
+            || !valid_longitude(max.longitude)
+            || min.longitude >= max.longitude
+        {
+            return Err(Error::InvalidLongitudeExtent);
+        }
+        if !valid_latitude(min.latitude)
+            || !valid_latitude(max.latitude)
+            || min.latitude >= max.latitude
+        {
+            return Err(Error::InvalidLatitudeExtent);
+        }
         let datetime_range_millis = (end_datetime - start_datetime).num_milliseconds();
         let longitude_range = max.longitude - min.longitude;
         let latitude_range = max.latitude - min.latitude;
@@ -156,6 +184,36 @@ impl Hasher {
             return Err(Error::InvalidLongitude(point.longitude));
         }
         Ok(self.interleave(datetime, point))
+    }
+
+    /// Hashes a datetime and point, then encodes the hash value.
+    pub fn hash_encoded(
+        &self,
+        datetime: DateTime<Utc>,
+        point: impl Into<Point>,
+        encoding: Encoding,
+    ) -> Result<String> {
+        self.hash(datetime, point)
+            .map(|hash| encode_hash(hash, encoding))
+    }
+
+    /// Returns the STAC Hash Extension metadata for this hasher.
+    #[cfg(test)]
+    pub(crate) fn config(&self, encoding: Encoding) -> config::HashConfig {
+        config::HashConfig {
+            algorithm: config::Algorithm::Morton,
+            dtype: config::DType::Uint64,
+            encoding,
+            spatial_precision: self.longitude_range.max(self.latitude_range) / MAX_VALUE,
+            temporal_precision: config::TEMPORAL_PRECISION,
+            spatial_extent: [
+                self.min_longitude,
+                self.min_latitude,
+                self.max_longitude,
+                self.max_latitude,
+            ],
+            temporal_extent: (self.start_datetime, self.end_datetime),
+        }
     }
 
     /// Converts a datetime and a Point into a hash, clamping anything outside
@@ -235,11 +293,20 @@ impl From<(f64, f64)> for Point {
     }
 }
 
+fn valid_longitude(longitude: f64) -> bool {
+    (-180.0..=180.0).contains(&longitude)
+}
+
+fn valid_latitude(latitude: f64) -> bool {
+    (-90.0..=90.0).contains(&latitude)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::Point;
+    use crate::config::{Algorithm, DType, STAC_EXTENSION_SCHEMA_URL, TEMPORAL_PRECISION};
 
-    use super::Hasher;
+    use super::{Encoding, Hasher, MAX_VALUE, encode_hash};
     use chrono::{DateTime, TimeZone, Utc};
     use rstest::{fixture, rstest};
 
@@ -280,6 +347,135 @@ mod tests {
     #[fixture]
     fn colorado(start_datetime: DateTime<Utc>, end_datetime: DateTime<Utc>) -> Hasher {
         Hasher::new(start_datetime, end_datetime, (-109., 37.), (-102., 41.)).unwrap()
+    }
+
+    #[rstest]
+    fn new_rejects_reversed_temporal_extent(
+        start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
+    ) {
+        assert!(matches!(
+            Hasher::global(end_datetime, start_datetime),
+            Err(super::Error::InvalidTemporalExtent)
+        ));
+        assert!(matches!(
+            Hasher::global(start_datetime, start_datetime),
+            Err(super::Error::InvalidTemporalExtent)
+        ));
+    }
+
+    #[rstest]
+    fn new_rejects_invalid_longitude_extent(
+        start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
+    ) {
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-102., 37.), (-109., 41.)),
+            Err(super::Error::InvalidLongitudeExtent)
+        ));
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-181., 37.), (-109., 41.)),
+            Err(super::Error::InvalidLongitudeExtent)
+        ));
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-109., 37.), (181., 41.)),
+            Err(super::Error::InvalidLongitudeExtent)
+        ));
+    }
+
+    #[rstest]
+    fn new_rejects_invalid_latitude_extent(
+        start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
+    ) {
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-109., 41.), (-102., 37.)),
+            Err(super::Error::InvalidLatitudeExtent)
+        ));
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-109., -91.), (-102., 41.)),
+            Err(super::Error::InvalidLatitudeExtent)
+        ));
+        assert!(matches!(
+            Hasher::new(start_datetime, end_datetime, (-109., 37.), (-102., 91.)),
+            Err(super::Error::InvalidLatitudeExtent)
+        ));
+    }
+
+    #[rstest]
+    fn encode_hash_supports_stac_extension_encodings() {
+        assert_eq!(
+            encode_hash(3024785829217804842, Encoding::Integer),
+            "3024785829217804842"
+        );
+        assert_eq!(
+            encode_hash(3024785829217804842, Encoding::Base16),
+            "29fa32af8829a22a"
+        );
+        assert_eq!(encode_hash(0, Encoding::Base16), "0000000000000000");
+    }
+
+    #[rstest]
+    fn hash_encoded_matches_hash_then_encode(hasher: Hasher, longmont: Point) {
+        let datetime = Utc.with_ymd_and_hms(2026, 6, 14, 12, 0, 0).unwrap();
+        let hash = hasher.hash(datetime, longmont).unwrap();
+        assert_eq!(
+            hasher
+                .hash_encoded(datetime, longmont, Encoding::Base16)
+                .unwrap(),
+            encode_hash(hash, Encoding::Base16)
+        );
+        assert_eq!(
+            hasher
+                .hash_encoded(datetime, longmont, Encoding::Integer)
+                .unwrap(),
+            encode_hash(hash, Encoding::Integer)
+        );
+    }
+
+    #[rstest]
+    fn global_config_matches_stac_extension_fields(
+        hasher: Hasher,
+        start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
+    ) {
+        let config = hasher.config(Encoding::Base16);
+        assert_eq!(config.algorithm, Algorithm::Morton);
+        assert_eq!(config.algorithm.as_str(), "morton");
+        assert_eq!(config.dtype, DType::Uint64);
+        assert_eq!(config.dtype.as_str(), "uint64");
+        assert_eq!(config.encoding, Encoding::Base16);
+        assert_eq!(config.encoding.as_str(), "base16");
+        assert_eq!(config.temporal_precision, TEMPORAL_PRECISION);
+        assert_eq!(config.temporal_precision, "PT0.001S");
+        assert_eq!(config.spatial_extent, [-180., -90., 180., 90.]);
+        assert_eq!(config.temporal_extent, (start_datetime, end_datetime));
+        assert_eq!(
+            STAC_EXTENSION_SCHEMA_URL,
+            "https://stac-extensions.github.io/hash/v0.1.0/schema.json"
+        );
+    }
+
+    #[rstest]
+    fn config_spatial_precision_uses_coarsest_dimension(hasher: Hasher) {
+        assert_eq!(
+            hasher.config(Encoding::Integer).spatial_precision,
+            360. / MAX_VALUE
+        );
+    }
+
+    #[rstest]
+    fn custom_config_uses_hasher_extents(
+        colorado: Hasher,
+        start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
+    ) {
+        let config = colorado.config(Encoding::Integer);
+        assert_eq!(config.encoding, Encoding::Integer);
+        assert_eq!(config.encoding.as_str(), "integer");
+        assert_eq!(config.spatial_extent, [-109., 37., -102., 41.]);
+        assert_eq!(config.temporal_extent, (start_datetime, end_datetime));
+        assert_eq!(config.spatial_precision, 7. / MAX_VALUE);
     }
 
     #[rstest]

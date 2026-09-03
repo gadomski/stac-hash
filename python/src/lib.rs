@@ -1,4 +1,4 @@
-use ::stac_hash::{Error, Hasher as RustHasher};
+use ::stac_hash::{Encoding, Error, Hasher as RustHasher, encode_hash as rust_encode_hash};
 use chrono::{DateTime, FixedOffset, Utc};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -44,6 +44,23 @@ impl Hasher {
     ) -> PyResult<u64> {
         self.0
             .hash(datetime.with_timezone(&Utc), (longitude, latitude))
+            .map_err(to_py_err)
+    }
+
+    /// Hashes a datetime and a point, then encodes the hash value.
+    fn hash_encoded(
+        &self,
+        datetime: DateTime<FixedOffset>,
+        longitude: f64,
+        latitude: f64,
+        encoding: &str,
+    ) -> PyResult<String> {
+        self.0
+            .hash_encoded(
+                datetime.with_timezone(&Utc),
+                (longitude, latitude),
+                parse_encoding(encoding)?,
+            )
             .map_err(to_py_err)
     }
 
@@ -129,14 +146,31 @@ impl Hasher {
     }
 }
 
+fn parse_encoding(encoding: &str) -> PyResult<Encoding> {
+    match encoding {
+        "integer" => Ok(Encoding::Integer),
+        "base16" => Ok(Encoding::Base16),
+        _ => Err(PyValueError::new_err(format!(
+            "unsupported encoding: {encoding}"
+        ))),
+    }
+}
+
 fn to_py_err(error: Error) -> PyErr {
     PyValueError::new_err(error.to_string())
+}
+
+/// Encodes a hash value using one of the STAC Hash Extension encodings.
+#[pyfunction]
+fn encode_hash(hash: u64, encoding: &str) -> PyResult<String> {
+    Ok(rust_encode_hash(hash, parse_encoding(encoding)?))
 }
 
 #[pymodule]
 fn stac_hash(m: &Bound<'_, PyModule>) -> PyResult<()> {
     pyo3_log::init();
     m.add_class::<Hasher>()?;
+    m.add_function(wrap_pyfunction!(encode_hash, m)?)?;
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     Ok(())
 }

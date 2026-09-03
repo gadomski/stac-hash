@@ -44,6 +44,56 @@ assert hash == 3024785829217804842
 
 Pass `bbox=(min_lon, min_lat, max_lon, max_lat)` to hash against a smaller extent, and use `hash_all(datetimes, longitudes, latitudes)` to hash a batch in one call. Datetimes must be timezone-aware, and the sequences must be the same length. Out-of-extent input raises `ValueError`; pass `skip_invalid=True` to `hash_all` to get `None` for those items instead of raising.
 
+## STAC extension fields
+
+Use `hash_encoded` for Item-level hash values. The `base16` encoding is lossless in JSON, including clients that cannot safely represent every `uint64` value as a number.
+
+```python
+from datetime import datetime, timezone
+
+from stac_hash import Hasher
+
+hasher = Hasher(
+    datetime(2026, 1, 1, tzinfo=timezone.utc),
+    datetime(2027, 1, 1, tzinfo=timezone.utc),
+)
+
+item_hash = hasher.hash_encoded(
+    datetime(2026, 6, 14, 12, tzinfo=timezone.utc),
+    -105.0,
+    40.0,
+    "base16",
+)
+
+collection = {
+    "stac_extensions": ["https://stac-extensions.github.io/hash/v0.1.0/schema.json"],
+    "hash:spatial_extent": [-180.0, -90.0, 180.0, 90.0],
+    "hash:temporal_extent": ["2026-01-01T00:00:00Z", "2027-01-01T00:00:00Z"],
+}
+item_properties = {"hash:hash": item_hash}
+```
+
+```rust
+use chrono::{TimeZone, Utc};
+use stac_hash::{Encoding, Hasher};
+
+let hasher = Hasher::global(
+    Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap(),
+    Utc.with_ymd_and_hms(2027, 1, 1, 0, 0, 0).unwrap(),
+)
+.unwrap();
+
+let item_hash = hasher
+    .hash_encoded(
+        Utc.with_ymd_and_hms(2026, 6, 14, 12, 0, 0).unwrap(),
+        (-105.0, 40.0),
+        Encoding::Base16,
+    )
+    .unwrap();
+```
+
+See the [STAC Hash Extension](stac-extension.md) for the complete field definitions and examples.
+
 To clamp instead of erroring, use `hash_clamped` and `hash_all_clamped`. They mirror the Rust `Hasher::hash_clamped` method: anything outside the extent is pinned to the nearest boundary, in time as well as space, so they never raise for out-of-range input.
 
 Each clamped value is logged as a warning through the standard library's `logging`, on a logger named `stac_hash`. Nothing is printed unless you configure logging:

@@ -4,6 +4,9 @@ from typing import Literal, overload
 
 __version__: str
 
+def encode_hash(hash: int, encoding: str) -> str:
+    """Encodes a hash value using one of the STAC Hash Extension encodings."""
+
 class Hasher:
     """Creates sortable spatio-temporal hashes.
 
@@ -19,6 +22,11 @@ class Hasher:
     ) -> None: ...
     def hash(self, datetime: datetime, longitude: float, latitude: float) -> int:
         """Hashes a datetime and a point into an `int`."""
+
+    def hash_encoded(
+        self, datetime: datetime, longitude: float, latitude: float, encoding: str
+    ) -> str:
+        """Hashes a datetime and a point, then encodes the hash value."""
 
     def hash_clamped(
         self, datetime: datetime, longitude: float, latitude: float
