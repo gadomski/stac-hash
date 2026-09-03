@@ -456,7 +456,7 @@ mod tests {
         assert_eq!(config.temporal_extent, (start_datetime, end_datetime));
         assert_eq!(
             STAC_EXTENSION_SCHEMA_URL,
-            "https://stac-extensions.github.io/hash/v1.0.0/schema.json"
+            "https://stac-extensions.github.io/hash/v0.1.0/schema.json"
         );
     }
 

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 
 /// The schema URL for the STAC Hash Extension described by this crate.
 pub const STAC_EXTENSION_SCHEMA_URL: &str =
-    "https://stac-extensions.github.io/hash/v1.0.0/schema.json";
+    "https://stac-extensions.github.io/hash/v0.1.0/schema.json";
 
 /// The temporal precision used by the current hash algorithm.
 pub const TEMPORAL_PRECISION: &str = "PT0.001S";

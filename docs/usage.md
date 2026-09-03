@@ -67,7 +67,7 @@ item_hash = hasher.hash_encoded(
 )
 
 collection = {
-    "stac_extensions": ["https://stac-extensions.github.io/hash/v1.0.0/schema.json"],
+    "stac_extensions": ["https://stac-extensions.github.io/hash/v0.1.0/schema.json"],
     **collection_fields,
 }
 item_properties = {"hash:hash": item_hash}

@@ -1,7 +1,7 @@
 # STAC Extension
 
 - **Title:** Hash
-- **Identifier:** <https://stac-extensions.github.io/hash/v1.0.0/schema.json>
+- **Identifier:** <https://stac-extensions.github.io/hash/v0.1.0/schema.json>
 - **Field Name Prefix:** hash
 - **Scope:** Collection, Item
 - **Extension [Maturity Classification](https://github.com/radiantearth/stac-spec/tree/master/extensions/README.md#extension-maturity):** Proposal

@@ -4,7 +4,7 @@ from typing import TypeAlias, cast
 
 ROOT = Path(__file__).parents[1]
 EXTENSION_DIR = ROOT / "docs" / "stac-extension"
-SCHEMA_URI = "https://stac-extensions.github.io/hash/v1.0.0/schema.json"
+SCHEMA_URI = "https://stac-extensions.github.io/hash/v0.1.0/schema.json"
 UINT64_MAX = 2**64 - 1
 
 JsonValue: TypeAlias = (

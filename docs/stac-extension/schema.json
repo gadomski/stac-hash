@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://stac-extensions.github.io/hash/v1.0.0/schema.json#",
+  "$id": "https://stac-extensions.github.io/hash/v0.1.0/schema.json#",
   "title": "Hash Extension",
   "description": "STAC Hash Extension for sortable spatio-temporal hashes in STAC Items and their Collection-level encoding parameters.",
   "type": "object",
@@ -12,7 +12,7 @@
     "stac_extensions": {
       "type": "array",
       "contains": {
-        "const": "https://stac-extensions.github.io/hash/v1.0.0/schema.json"
+        "const": "https://stac-extensions.github.io/hash/v0.1.0/schema.json"
       }
     },
     "type": {
