@@ -60,36 +60,6 @@ def test_hash_encoded_rejects_unknown_encoding(
         hasher.hash_encoded(start_datetime, -105.0, 40.0, "base64")
 
 
-def test_config_returns_stac_extension_fields(
-    hasher: Hasher, start_datetime: datetime, end_datetime: datetime
-):
-    config = hasher.config("base16")
-    assert config == {
-        "hash:algorithm": "morton",
-        "hash:dtype": "uint64",
-        "hash:encoding": "base16",
-        "hash:spatial_precision": 360.0 / ((2**21) - 1),
-        "hash:temporal_precision": "PT0.001S",
-        "hash:spatial_extent": [-180.0, -90.0, 180.0, 90.0],
-        "hash:temporal_extent": [
-            start_datetime.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
-            end_datetime.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
-        ],
-    }
-
-
-def test_config_uses_custom_bbox(colorado: Hasher):
-    config = colorado.config("integer")
-    assert config["hash:encoding"] == "integer"
-    assert config["hash:spatial_extent"] == [-109.0, 37.0, -102.0, 41.0]
-    assert config["hash:spatial_precision"] == 7.0 / ((2**21) - 1)
-
-
-def test_config_rejects_unknown_encoding(hasher: Hasher):
-    with pytest.raises(ValueError, match="unsupported encoding"):
-        hasher.config("base64")
-
-
 def test_constructor_rejects_reversed_temporal_extent(
     start_datetime: datetime, end_datetime: datetime
 ):

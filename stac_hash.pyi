@@ -1,23 +1,8 @@
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Literal, TypeAlias, TypedDict, overload
+from typing import Literal, overload
 
 __version__: str
-
-Encoding: TypeAlias = Literal["integer", "base16"]
-
-HashConfig = TypedDict(
-    "HashConfig",
-    {
-        "hash:algorithm": str,
-        "hash:dtype": str,
-        "hash:encoding": str,
-        "hash:spatial_precision": float,
-        "hash:temporal_precision": str,
-        "hash:spatial_extent": list[float],
-        "hash:temporal_extent": list[str],
-    },
-)
 
 def encode_hash(hash: int, encoding: str) -> str:
     """Encodes a hash value using one of the STAC Hash Extension encodings."""
@@ -42,9 +27,6 @@ class Hasher:
         self, datetime: datetime, longitude: float, latitude: float, encoding: str
     ) -> str:
         """Hashes a datetime and a point, then encodes the hash value."""
-
-    def config(self, encoding: str) -> HashConfig:
-        """Returns STAC Hash Extension fields for this hasher."""
 
     def hash_clamped(
         self, datetime: datetime, longitude: float, latitude: float

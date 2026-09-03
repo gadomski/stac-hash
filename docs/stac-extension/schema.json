@@ -45,11 +45,6 @@
       "type": "object",
       "required": [
         "type",
-        "hash:algorithm",
-        "hash:dtype",
-        "hash:encoding",
-        "hash:spatial_precision",
-        "hash:temporal_precision",
         "hash:spatial_extent",
         "hash:temporal_extent"
       ],
@@ -84,6 +79,7 @@
     "hash:algorithm": {
       "description": "The space-filling curve used to compute the hash.",
       "type": "string",
+      "default": "morton",
       "enum": [
         "morton"
       ]
@@ -91,6 +87,7 @@
     "hash:dtype": {
       "description": "The unsigned integer width into which the hash is packed. Currently only uint64 is supported.",
       "type": "string",
+      "default": "uint64",
       "enum": [
         "uint64"
       ]
@@ -98,6 +95,7 @@
     "hash:encoding": {
       "description": "The representation used for hash:hash in JSON. Currently integer and base16 are supported.",
       "type": "string",
+      "default": "integer",
       "enum": [
         "integer",
         "base16"
@@ -111,6 +109,7 @@
     "hash:temporal_precision": {
       "description": "The datetime quantization step as an ISO 8601 duration. Currently fixed to millisecond precision.",
       "type": "string",
+      "default": "PT0.001S",
       "const": "PT0.001S"
     },
     "hash:spatial_extent": {

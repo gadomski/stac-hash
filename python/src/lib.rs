@@ -1,8 +1,7 @@
 use ::stac_hash::{Encoding, Error, Hasher as RustHasher, encode_hash as rust_encode_hash};
-use chrono::{DateTime, FixedOffset, SecondsFormat, Utc};
+use chrono::{DateTime, FixedOffset, Utc};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList};
 
 /// Creates sortable spatio-temporal hashes.
 ///
@@ -63,32 +62,6 @@ impl Hasher {
                 parse_encoding(encoding)?,
             )
             .map_err(to_py_err)
-    }
-
-    /// Returns STAC Hash Extension fields for this hasher.
-    fn config<'py>(&self, py: Python<'py>, encoding: &str) -> PyResult<Bound<'py, PyDict>> {
-        let config = self.0.config(parse_encoding(encoding)?);
-        let dict = PyDict::new(py);
-        dict.set_item("hash:algorithm", config.algorithm.as_str())?;
-        dict.set_item("hash:dtype", config.dtype.as_str())?;
-        dict.set_item("hash:encoding", config.encoding.as_str())?;
-        dict.set_item("hash:spatial_precision", config.spatial_precision)?;
-        dict.set_item("hash:temporal_precision", config.temporal_precision)?;
-        dict.set_item(
-            "hash:spatial_extent",
-            PyList::new(py, config.spatial_extent)?,
-        )?;
-        dict.set_item(
-            "hash:temporal_extent",
-            PyList::new(
-                py,
-                [
-                    format_datetime(config.temporal_extent.0),
-                    format_datetime(config.temporal_extent.1),
-                ],
-            )?,
-        )?;
-        Ok(dict)
     }
 
     /// Hashes a datetime and a point into an `int`, clamping anything outside
@@ -181,10 +154,6 @@ fn parse_encoding(encoding: &str) -> PyResult<Encoding> {
             "unsupported encoding: {encoding}"
         ))),
     }
-}
-
-fn format_datetime(datetime: DateTime<Utc>) -> String {
-    datetime.to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
 fn to_py_err(error: Error) -> PyErr {

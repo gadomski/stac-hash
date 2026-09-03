@@ -46,7 +46,7 @@ Pass `bbox=(min_lon, min_lat, max_lon, max_lat)` to hash against a smaller exten
 
 ## STAC extension fields
 
-Use `config` for the Collection-level extension fields and `hash_encoded` for Item-level hash values. The `base16` encoding is lossless in JSON, including clients that cannot safely represent every `uint64` value as a number.
+Use `hash_encoded` for Item-level hash values. The `base16` encoding is lossless in JSON, including clients that cannot safely represent every `uint64` value as a number.
 
 ```python
 from datetime import datetime, timezone
@@ -58,7 +58,6 @@ hasher = Hasher(
     datetime(2027, 1, 1, tzinfo=timezone.utc),
 )
 
-collection_fields = hasher.config("base16")
 item_hash = hasher.hash_encoded(
     datetime(2026, 6, 14, 12, tzinfo=timezone.utc),
     -105.0,
@@ -68,7 +67,8 @@ item_hash = hasher.hash_encoded(
 
 collection = {
     "stac_extensions": ["https://stac-extensions.github.io/hash/v0.1.0/schema.json"],
-    **collection_fields,
+    "hash:spatial_extent": [-180.0, -90.0, 180.0, 90.0],
+    "hash:temporal_extent": ["2026-01-01T00:00:00Z", "2027-01-01T00:00:00Z"],
 }
 item_properties = {"hash:hash": item_hash}
 ```

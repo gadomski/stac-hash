@@ -41,11 +41,11 @@ The fields in the tables below can be used in these parts of STAC documents:
 
 | Field Name | Type | Description |
 | ---------- | ---- | ----------- |
-| hash:algorithm | string | **REQUIRED**. The space-filling curve used to compute the hash. Currently only `morton` is allowed. |
-| hash:dtype | string | **REQUIRED**. The unsigned integer width into which the hash is packed. Currently only `uint64` is allowed. |
-| hash:encoding | string | **REQUIRED**. The representation used for `hash:hash` in JSON: `integer` or `base16`. |
-| hash:spatial_precision | number | **REQUIRED**. The coarsest approximate spatial quantization step for the configured extent, in degrees. |
-| hash:temporal_precision | string | **REQUIRED**. The datetime quantization step as an ISO 8601 duration. Currently only `PT0.001S` is allowed. |
+| hash:algorithm | string | The space-filling curve used to compute the hash. Defaults to `morton`, which is currently the only allowed value. |
+| hash:dtype | string | The unsigned integer width into which the hash is packed. Defaults to `uint64`, which is currently the only allowed value. |
+| hash:encoding | string | The representation used for `hash:hash` in JSON: `integer` or `base16`. Defaults to `integer`. |
+| hash:spatial_precision | number | The coarsest approximate spatial quantization step for the configured extent, in degrees. This is derived from `hash:spatial_extent` and the current bit allocation. |
+| hash:temporal_precision | string | The datetime quantization step as an ISO 8601 duration. Defaults to `PT0.001S`, which is currently the only allowed value. |
 | hash:spatial_extent | [number] | **REQUIRED**. The spatial normalization bounds as `[west, south, east, north]`. |
 | hash:temporal_extent | [string] | **REQUIRED**. The temporal normalization bounds as `[start, end]`; both values are concrete datetimes. |
 
@@ -56,6 +56,10 @@ The fields in the tables below can be used in these parts of STAC documents:
 The hash value varies per Item, but the parameters used to compute and decode it are constant for a Collection. Keeping those
 parameters on the Collection avoids repeating the same values on every Item and makes precision or extent changes explicit at the
 Collection boundary.
+
+Large or continuously updated datasets may need different hash extents for different partitions, such as per-year spatial-temporal
+subsets. In those cases, the partition-level Collection should define the extents used for the Items it contains; a top-level
+Collection can omit hash extents if it does not directly define interpretable Item hashes.
 
 ### JSON Encoding
 

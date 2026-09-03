@@ -30,22 +30,33 @@ def definition_for(schema: JsonObject, field_name: str) -> JsonObject:
 def test_collection_example_matches_extension_schema():
     schema = load_json(EXTENSION_DIR / "schema.json")
     collection = load_json(EXTENSION_DIR / "examples" / "collection.json")
+    collection_schema = cast(JsonObject, cast(list[JsonValue], schema["oneOf"])[1])
+    required_fields = cast(list[str], collection_schema["required"])
 
     assert SCHEMA_URI in cast(list[str], collection["stac_extensions"])
     assert collection["type"] == "Collection"
+    assert required_fields == [
+        "type",
+        "hash:spatial_extent",
+        "hash:temporal_extent",
+    ]
     assert collection["hash:algorithm"] in cast(
         list[str], definition_for(schema, "hash:algorithm")["enum"]
     )
+    assert definition_for(schema, "hash:algorithm")["default"] == "morton"
     assert collection["hash:dtype"] in cast(
         list[str], definition_for(schema, "hash:dtype")["enum"]
     )
+    assert definition_for(schema, "hash:dtype")["default"] == "uint64"
     assert collection["hash:encoding"] in cast(
         list[str], definition_for(schema, "hash:encoding")["enum"]
     )
+    assert definition_for(schema, "hash:encoding")["default"] == "integer"
     assert (
         collection["hash:temporal_precision"]
         == definition_for(schema, "hash:temporal_precision")["const"]
     )
+    assert definition_for(schema, "hash:temporal_precision")["default"] == "PT0.001S"
 
     west, south, east, north = cast(list[float], collection["hash:spatial_extent"])
     assert -180 <= west < east <= 180
