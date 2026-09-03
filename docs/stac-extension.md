@@ -5,6 +5,7 @@
 - **Field Name Prefix:** hash
 - **Scope:** Collection, Item
 - **Extension [Maturity Classification](https://github.com/radiantearth/stac-spec/tree/master/extensions/README.md#extension-maturity):** Proposal
+- **Owner:** @gadomski
 
 This document explains the Hash Extension to the
 [SpatioTemporal Asset Catalog](https://github.com/radiantearth/stac-spec) (STAC) specification.
