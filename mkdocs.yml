@@ -13,6 +13,7 @@ nav:
   - Usage: usage.md
   - Tutorials:
       - Create Hash GeoParquet: tutorials/create-hash-geoparquet.ipynb
+      - Query Hash GeoParquet: tutorials/query-hash-geoparquet.ipynb
   - STAC Extension: stac-extension.md
   - API: api.md
 
