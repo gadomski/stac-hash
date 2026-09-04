@@ -20,7 +20,11 @@ classifiers = [
     "Typing :: Typed",
 ]
 dynamic = ["version"]
-dependencies = []
+dependencies = [
+    "duckdb>=1.5.5",
+    "pyarrow>=25.0.1",
+    "shapely>=2.1.2",
+]
 
 [project.urls]
 Repository = "https://github.com/gadomski/stac-hash"
@@ -53,6 +57,7 @@ dev = [
 ]
 docs = [
     "mike>=2.1",
+    "mkdocs-jupyter>=0.25",
     "mkdocs-material[imaging]>=9.5",
     "mkdocstrings[python]>=1.0.6",
 ]

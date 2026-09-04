@@ -11,6 +11,8 @@ exclude_docs: |
 nav:
   - Home: index.md
   - Usage: usage.md
+  - Tutorials:
+      - Create Hash GeoParquet: tutorials/create-hash-geoparquet.ipynb
   - STAC Extension: stac-extension.md
   - API: api.md
 
@@ -37,6 +39,9 @@ extra:
 plugins:
   - search
   - mike
+  - mkdocs-jupyter:
+      execute: false
+      include_source: true
   - social:
       cards_layout_options:
         color: rgb(26, 78, 99)
