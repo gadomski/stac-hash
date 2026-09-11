@@ -24,7 +24,7 @@ jobs:
         with:
           client-id: ${{ vars.RELEASE_PLZ_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_PLZ_APP_PRIVATE_KEY }}
-      - uses: release-plz/action@2eb1d8bcb770b4c48ccfaad919734b38b51958c9 # v0.5
+      - uses: release-plz/action@b5543c19b03be9bd48852d20ca89f478b7723260 # v0.5
         with:
           command: release
         env:
@@ -50,7 +50,7 @@ jobs:
         with:
           client-id: ${{ vars.RELEASE_PLZ_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_PLZ_APP_PRIVATE_KEY }}
-      - uses: release-plz/action@2eb1d8bcb770b4c48ccfaad919734b38b51958c9 # v0.5
+      - uses: release-plz/action@b5543c19b03be9bd48852d20ca89f478b7723260 # v0.5
         with:
           command: release-pr
         env:
